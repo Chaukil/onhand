@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Tồn Kho & PO/Demand - Ashley</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; font-size: 0.75rem; }
+        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card-header { background-color: #1e3a8a; color: white; padding: 0.4rem 0.8rem; }
+        .card-body { padding: 0.8rem; }
+        .table-responsive { max-height: 65vh; overflow: auto; }
+        .table th { background-color: #1e3a8a; color: white; position: sticky; top: 0; z-index: 2; font-size: 0.7rem; padding: 0.3rem 0.4rem; white-space: nowrap; }
+        .table td { padding: 0.25rem 0.4rem; font-size: 0.7rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .modal-xl-custom { max-width: 95vw; }
+        .modal .table th { background-color: #343a40; }
+        .btn-ashley { background-color: #1e3a8a; color: white; }
+        .btn-ashley:hover { background-color: #254a9e; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1060; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .toast-container { z-index: 1070; }
+        .form-label { font-weight: 500; margin-bottom: 0.2rem; font-size: 0.7rem; }
+        .form-control-sm, .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+        .nav-tabs .nav-link { color: #1e3a8a; padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        .nav-tabs .nav-link.active { font-weight: bold; background-color: #eef2ff; border-color: #dee2e6 #dee2e6 #eef2ff; }
+        .no-data-placeholder { padding: 3rem; text-align: center; color: #6c757d; }
+        .no-data-placeholder i { font-size: 2.5rem; margin-bottom: 1rem; color: #ced4da; }
+        h4 { font-size: 1rem; }
+        h5 { font-size: 0.85rem; }
+        .btn-group-sm .btn { padding: 0.15rem 0.3rem; font-size: 0.65rem; }
+        .debug-info { background: #f8f9fa; padding: 0.5rem; margin-bottom: 1rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.7rem; border-left: 4px solid #007bff; }
+        .connection-status { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; }
+        .status-connected { background-color: #d4edda; color: #155724; }
+        .status-disconnected { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+        <p class="mt-3 fs-6" id="loadingText">Đang kết nối...</p>
+    </div>
+
+    <div class="container-fluid my-3">
+        <div class="row align-items-center mb-3">
+            <div class="col">
+                <h4 class="mb-0">Hệ Thống Tồn Kho, PO & Demand - Ashley <span class="badge bg-secondary">IBM i ODBC</span></h4>
+            </div>
+            <div class="col-auto">
+                <span id="connectionStatus" class="connection-status status-disconnected">
+                    <i class="fas fa-circle me-1"></i>Chưa kết nối
+                </span>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-plug me-2"></i>Kết Nối IBM i</h5></div>
+            <div class="card-body pb-2">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Máy Chủ</label>
+                        <input type="text" class="form-control form-control-sm" id="host" value="wfvnprod.ashleyfurniture.com">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tài Khoản</label>
+                        <input type="text" class="form-control form-control-sm" id="username" placeholder="User ID">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Mật Khẩu</label>
+                        <input type="password" class="form-control form-control-sm" id="password" placeholder="Password">
+                    </div>
+                    <div class="col-md-5">
+                        <div class="btn-group w-100">
+                            <button id="connectBtn" class="btn btn-ashley btn-sm"><i class="fas fa-plug me-2"></i>Kết Nối</button>
+                            <button id="disconnectBtn" class="btn btn-danger btn-sm" disabled><i class="fas fa-unlink me-2"></i>Ngắt Kết Nối</button>
+                            <button id="testBtn" class="btn btn-info btn-sm"><i class="fas fa-vial me-2"></i>Test</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="queryPanel" class="card d-none">
+            <div class="card-body p-2">
+                <ul class="nav nav-pills" id="mainTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="onhand-tab" data-bs-toggle="tab" data-bs-target="#onhand-pane">Tồn Kho</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="demand-tab" data-bs-toggle="tab" data-bs-target="#demand-pane">Cài Đặt Demand</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content p-3 border-top">
+                <div class="tab-pane fade show active" id="onhand-pane">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Lọc Kho (House)</label>
+                            <input type="text" class="form-control form-control-sm" id="houseFilter" value="35" placeholder="VD: 35, 41">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Lọc Mặt Hàng (ITNBR)</label>
+                            <input type="text" class="form-control form-control-sm" id="itemFilter" placeholder="VD: 100350, A3000324">
+                        </div>
+                        <div class="col-md-3">
+                            <button id="loadOnhandBtn" class="btn btn-success btn-sm w-100"><i class="fas fa-database me-2"></i>Tải Tồn Kho</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="demand-pane">
+                     <p class="text-muted small">Đặt khoảng thời gian cho chức năng "Kiểm Tra Demand" và các tùy chọn debug.</p>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Từ Ngày</label>
+                            <input type="date" class="form-control form-control-sm" id="demandFromDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Đến Ngày</label>
+                            <input type="date" class="form-control form-control-sm" id="demandToDate">
+                        </div>
+                        <div class="col-md-3">
+                            <button id="toggleDebugBtn" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-bug me-2"></i>Bật/Tắt Debug</button>
+                        </div>
+                        <div class="col-md-3">
+                            <button id="clearDataBtn" class="btn btn-outline-warning btn-sm w-100"><i class="fas fa-trash me-2"></i>Xóa Dữ Liệu</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsPanel" class="card mt-3 d-none">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i><span id="tableTitle"></span> (<span id="recordCount">0</span> bản ghi)</h5>
+                <button id="exportBtn" class="btn btn-outline-light btn-sm"><i class="fas fa-file-excel me-2"></i>Xuất Excel</button>
+            </div>
+            <div class="card-body p-2">
+                <div id="debugInfo" class="debug-info d-none"></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover table-bordered mb-0">
+                        <thead><tr id="tableHeader"></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="infoModal" tabindex="-1">
+        <div class="modal-dialog modal-xl-custom modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="modalTitle">Chi Tiết</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent" class="table-responsive"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        class MainApp {
+            constructor() {
+                this.isConnected = false; 
+                this.connectionInfo = null; 
+                this.currentData = [];
+                this.debugMode = false;
+                this.modal = new bootstrap.Modal(document.getElementById('infoModal'));
+                this.bindEvents(); 
+                this.loadPrefs(); 
+                this.initDates();
+                this.updateConnectionStatus();
+            }
+
+            initDates() {
+                const today = new Date(); 
+                const nextMonth = new Date();
+                nextMonth.setMonth(today.getMonth() + 1);
+                document.getElementById('demandFromDate').valueAsDate = today;
+                document.getElementById('demandToDate').valueAsDate = nextMonth;
+            }
+
+            bindEvents() {
+                document.getElementById('connectBtn').onclick = () => this.connect();
+                document.getElementById('disconnectBtn').onclick = () => this.disconnect();
+                document.getElementById('testBtn').onclick = () => this.testConnection();
+                document.getElementById('loadOnhandBtn').onclick = () => this.loadOnhand();
+                document.getElementById('exportBtn').onclick = () => this.exportToExcel();
+                document.getElementById('toggleDebugBtn').onclick = () => this.toggleDebug();
+                document.getElementById('clearDataBtn').onclick = () => this.clearData();
+                
+                // Event delegation cho các nút trong bảng
+                document.getElementById('tableBody').addEventListener('click', (e) => {
+                    if (e.target.closest('[data-action]')) {
+                        this.handleTableAction(e);
+                    }
+                });
+                
+                document.getElementById('password').addEventListener('keypress', e => { 
+                    if (e.key === 'Enter') this.connect(); 
+                });
+
+                // Auto-save preferences
+                ['host', 'username'].forEach(id => {
+                    document.getElementById(id).addEventListener('change', () => this.savePrefs());
+                });
+            }
+
+            updateConnectionStatus() {
+                const statusEl = document.getElementById('connectionStatus');
+                if (this.isConnected) {
+                    statusEl.className = 'connection-status status-connected';
+                    statusEl.innerHTML = '<i class="fas fa-circle me-1"></i>Đã kết nối';
+                } else {
+                    statusEl.className = 'connection-status status-disconnected';
+                    statusEl.innerHTML = '<i class="fas fa-circle me-1"></i>Chưa kết nối';
+                }
+            }
+
+            toggleDebug() {
+                this.debugMode = !this.debugMode;
+                document.getElementById('debugInfo').classList.toggle('d-none', !this.debugMode);
+                this.showToast('info', 'Debug Mode', this.debugMode ? 'Đã bật chế độ debug' : 'Đã tắt chế độ debug');
+            }
+
+            clearData() {
+                this.currentData = [];
+                document.getElementById('resultsPanel').classList.add('d-none');
+                document.getElementById('debugInfo').classList.add('d-none');
+                this.showToast('info', 'Đã Xóa', 'Dữ liệu hiển thị đã được xóa.');
+            }
+
+            async testConnection() {
+                const host = document.getElementById('host').value.trim();
+                const user = document.getElementById('username').value.trim();
+                const pass = document.getElementById('password').value;
+                
+                if (!user || !pass) {
+                    return this.showToast('warning', 'Thiếu Thông Tin', 'Vui lòng nhập tài khoản và mật khẩu để test.');
+                }
+                
+                this.setLoading(true, 'Đang test kết nối...');
+                try {
+                    const testSql = 'SELECT CURRENT USER, CURRENT SERVER FROM SYSIBM.SYSDUMMY1';
+                    const result = await this.fetchApi({ host, username: user, password: pass, sql: testSql });
+                    
+                    if (result.data && result.data.length > 0) {
+                        const data = result.data[0];
+                        this.showToast('success', 'Test Thành Công!', `User: ${Object.values(data)[0]}, Server: ${Object.values(data)[1]}`);
+                    } else {
+                        this.showToast('success', 'Test Thành Công!', 'Kết nối IBM i hoạt động bình thường.');
+                    }
+                } catch (err) { 
+                    this.showToast('danger', 'Test Thất Bại', err.message); 
+                } finally { 
+                    this.setLoading(false); 
+                }
+            }
+
+            async connect() {
+                const host = document.getElementById('host').value.trim();
+                const user = document.getElementById('username').value.trim();
+                const pass = document.getElementById('password').value;
+                if (!user || !pass) return this.showToast('danger', 'Lỗi', 'Tài khoản và mật khẩu là bắt buộc.');
+                
+                this.setLoading(true, 'Đang kết nối đến IBM i...');
+                try {
+                    await this.fetchApi({ host, username: user, password: pass, sql: 'SELECT CURRENT USER FROM SYSIBM.SYSDUMMY1' });
+                    this.isConnected = true; 
+                    this.connectionInfo = { host, username: user, password: pass };
+                    this.updateUIState(); 
+                    this.updateConnectionStatus();
+                    this.savePrefs();
+                    this.showToast('success', 'Đã Kết Nối!', `Kết nối thành công với tài khoản ${user.toUpperCase()}.`);
+                } catch (err) { 
+                    this.showToast('danger', 'Kết Nối Thất Bại', err.message); 
+                } finally { 
+                    this.setLoading(false); 
+                }
+            }
+            
+            disconnect() {
+                this.isConnected = false; 
+                this.connectionInfo = null; 
+                this.updateUIState();
+                this.updateConnectionStatus();
+                this.clearData();
+                this.showToast('info', 'Đã Ngắt Kết Nối', 'Kết nối đến IBM i đã được đóng.');
+            }
+
+            async loadOnhand() {
+                const houseFilter = this.formatInClause(document.getElementById('houseFilter').value);
+                const itemFilter = this.formatInClause(document.getElementById('itemFilter').value);
+                
+                let sql = `SELECT 
+                    CAST(SLQNTY.HOUSE AS CHAR(10)) AS HOUSE,
+                    CAST(SLQNTY.ITNBR AS CHAR(20)) AS ITNBR, 
+                    CAST(RTRIM(ITEMASA.ITDSC) AS CHAR(50)) AS ITDSC,
+                    CAST(SLQNTY.LLOCN AS CHAR(10)) AS LLOCN,
+                    CAST(ITEMASA.UNMSR AS CHAR(5)) AS UNMSR,
+                    SLQNTY.LQNTY,
+                    ITEMBL.MALQT AS DEMAN,
+                    CAST(ITEMASA.ITCLS AS CHAR(5)) AS ITCLS,
+                    CAST(SLQNTY.LBHNO AS CHAR(20)) AS LBHNO
+                FROM AMFLIBW.ITEMASA ITEMASA, 
+                     AMFLIBW.ITEMBL ITEMBL, 
+                     AMFLIBW.SLQNTY SLQNTY 
+                WHERE ITEMASA.ITNBR = SLQNTY.ITNBR 
+                  AND ITEMBL.HOUSE = SLQNTY.HOUSE 
+                  AND ITEMBL.ITNBR = ITEMASA.ITNBR 
+                  AND ITEMBL.ITNBR = SLQNTY.ITNBR`;
+                
+                if (houseFilter) sql += ` AND SLQNTY.HOUSE IN ${houseFilter}`;
+                if (itemFilter) sql += ` AND SLQNTY.ITNBR IN ${itemFilter}`;
+                sql += ' ORDER BY SLQNTY.ITNBR ASC, SLQNTY.LLOCN DESC';
+                
+                await this.executeQuery(sql, 'Dữ Liệu Tồn Kho', false);
+            }
+
+            async handleTableAction(e) {
+                const button = e.target.closest('[data-action]');
+                if (!button) return;
+                
+                const action = button.getAttribute('data-action');
+                const item = button.getAttribute('data-item');
+                const house = button.getAttribute('data-house');
+                
+                console.log('Nút được nhấn:', { action, item, house });
+                
+                if (action === 'check-po') {
+                    await this.checkItemPo(item, house);
+                } else if (action === 'check-demand') {
+                    await this.checkItemDemand(item, house);
+                }
+            }
+            
+            async checkItemPo(item, house) {
+                console.log('Kiểm tra PO cho:', item, house);
+                const sql = `SELECT 
+                    CAST(VENDOROPEN.HOUSE AS CHAR(5)) AS WH, 
+                    CAST(VENDOROPEN.ORDNO AS CHAR(10)) AS ORDNO, 
+                    CAST(VENDOROPEN.ITEM AS CHAR(20)) AS ITEM, 
+                    CAST(VENDOROPEN.DSC AS CHAR(30)) AS DSC, 
+                    VENDOROPEN.QTYOR AS ORDER_PO, 
+                    VENDOROPEN.INSQT as RIRP_IQC, 
+                    VENDOROPEN.QTYRT AS VR, 
+                    VENDOROPEN.STKQT, 
+                    VENDOROPEN.BALANCE, 
+                    CAST(VENDOROPEN.VNAMA AS CHAR(30)) AS VNAMA, 
+                    CAST(VENDOROPEN.VNDNR AS CHAR(10)) AS VNDNR, 
+                    CAST(ITEMASA.ITCLS AS CHAR(5)) AS ITCLS, 
+                    VENDOROPEN.DUEDATE 
+                FROM G20ACF9V.VDOWNLOADF.VENDOROPEN VENDOROPEN, AMFLIBW.ITEMASA ITEMASA 
+                WHERE VENDOROPEN.ITEM = ITEMASA.ITNBR 
+                  AND VENDOROPEN.ITEM = '${item}' 
+                  AND VENDOROPEN.HOUSE = '${house}' 
+                ORDER BY VENDOROPEN.ORDNO`;
+                await this.executeQuery(sql, `Trạng Thái PO - Mặt Hàng: ${item}`, true);
+            }
+
+            async checkItemDemand(item, house) {
+                console.log('Kiểm tra Demand cho:', item, house);
+                const fromDateEl = document.getElementById('demandFromDate');
+                const toDateEl = document.getElementById('demandToDate');
+                
+                if (!fromDateEl.value || !toDateEl.value) {
+                    return this.showToast('warning', 'Thiếu Thông Tin', 'Vui lòng đặt khoảng thời gian trong "Cài Đặt Demand".');
+                }
+                
+                const qDate1 = this.formatJulianDate(new Date(fromDateEl.value));
+                const qDate2 = this.formatJulianDate(new Date(toDateEl.value));
+
+                const sql = `SELECT 
+                    A.CITWH AS HOUSE, 
+                    C.ODUDT, 
+                    CAST(A.CITEM AS CHAR(20)) as SUB_ITEM, 
+                    CAST(A.CDESC AS CHAR(30)) AS SUB_DES, 
+                    CAST(C.JOBNO AS CHAR(10)) AS JOBNO, 
+                    CAST(SUM(CAST(A.QTREQ AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SUB_REQ, 
+                    CAST(SUM(CAST(A.ISQTY AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SCAN, 
+                    CAST(SUM(CAST((A.QTREQ-A.ISQTY) AS DECIMAL(12,2))) AS DECIMAL(12,2)) as BALANCE, 
+                    CAST(C.ORDNO AS CHAR(10)) AS ORDNO, 
+                    C.ORQTY, 
+                    CAST(C.FITEM AS CHAR(20)) AS FG_ITEM, 
+                    A.FLSTK, 
+                    CAST(SUBSTR(C.JOBNO,1,4) AS CHAR(4)) AS LINE, 
+                    CAST(A.UNMSR AS CHAR(5)) AS UNIT, 
+                    CAST(B.ITCLAD AS CHAR(5)) AS ITCL, 
+                    CAST(A.OPRWU AS CHAR(10)) as WHERE_USE 
+                FROM AMFLIBW.MOMAST C, AMFLIBW.ITMRVAL0 B, AMFLIBW.MODATA A 
+                WHERE A.CITWH = B.STIDAD 
+                  AND A.CITEM = B.ITNOAD 
+                  AND C.ORDNO = A.ORDNO 
+                  AND C.ODUDT BETWEEN ${qDate1} AND ${qDate2} 
+                  AND C.FITEM = '${item}' 
+                  AND A.CITWH = '${house}' 
+                GROUP BY A.CITWH, C.ODUDT, A.CITEM, A.CDESC, C.JOBNO, C.ORDNO, C.ORQTY, C.FITEM, A.FLSTK, SUBSTR(C.JOBNO,1,4), A.UNMSR, B.ITCLAD, A.OPRWU 
+                ORDER BY C.ODUDT, A.CITEM, C.JOBNO`;
+                
+                await this.executeQuery(sql, `Demand cho Mặt Hàng: ${item} (từ ${fromDateEl.value} đến ${toDateEl.value})`, true);
+            }
+
+            async executeQuery(sql, title, isModal = false) {
+                if (!this.isConnected) {
+                    return this.showToast('warning', 'Chưa Kết Nối', 'Vui lòng kết nối đến hệ thống trước.');
+                }
+                
+                this.setLoading(true, `Đang tải ${title}...`);
+                try {
+                    const result = await this.fetchApi({ ...this.connectionInfo, sql });
+                    
+                    console.log('Kết quả truy vấn:', result);
+                    
+                    if (isModal) {
+                        this.showModal(title, result.data);
+                    } else {
+                        this.currentData = result.data;
+                        this.displayTable(result.data, title);
+                    }
+                    this.showToast('info', 'Đã Tải Dữ Liệu', `${result.data.length} bản ghi được tải.`);
+                } catch (err) {
+                    console.error('Lỗi truy vấn:', err);
+                    this.showToast('danger', 'Tải Dữ Liệu Thất Bại', err.message);
+                } finally { 
+                    this.setLoading(false); 
+                }
+            }
+            
+            async fetchApi(body) {
+                const res = await fetch('/api/query', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(body) 
+                });
+                const result = await res.json();
+                if (!res.ok || !result.success) {
+                    throw new Error(result.error || `Lỗi máy chủ: ${res.status}`);
+                }
+                return result;
+            }
+
+            displayTable(data, title = 'Kết Quả') {
+                document.getElementById('resultsPanel').classList.remove('d-none');
+                document.getElementById('tableTitle').textContent = title;
+                document.getElementById('recordCount').textContent = data.length;
+                
+                // Thông tin debug được cải thiện
+                if (this.debugMode) {
+                    const debugInfo = document.getElementById('debugInfo');
+                    debugInfo.classList.remove('d-none');
+                    debugInfo.innerHTML = `
+                        <strong>Debug Info:</strong><br>
+                        - Tổng số bản ghi: ${data.length}<br>
+                        - Kiểu dữ liệu mẫu: ${Array.isArray(data[0]) ? 'Array' : typeof data[0]}<br>
+                        ${data[0] ? `- Keys của dữ liệu mẫu: ${Object.keys(data[0]).join(', ')}<br>` : ''}
+                        ${data[0] ? `- Dữ liệu mẫu: <pre style="margin:0; font-size:0.6rem; max-height:100px; overflow:auto;">${JSON.stringify(data[0], null, 2)}</pre>` : ''}
+                    `;
+                }
+                
+                const tableHeader = document.getElementById('tableHeader');
+                const tableBody = document.getElementById('tableBody');
+                tableHeader.innerHTML = ''; 
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    return tableBody.innerHTML = '<tr><td colspan="10" class="no-data-placeholder"><i class="fas fa-info-circle"></i><br>Không tìm thấy dữ liệu với tiêu chí này.</td></tr>';
+                }
+                
+                // Xác định headers dựa trên loại query
+                const isOnhandData = title.includes('Tồn Kho');
+                let headers, columnKeys;
+                
+                if (isOnhandData) {
+                    headers = ['KHO', 'MẶT_HÀNG', 'MÔ_TẢ', 'VỊ_TRÍ', 'ĐVT', 'SL_TỒN', 'DEMAND', 'LOẠI_HH', 'BATCH', 'THAO_TÁC'];
+                    columnKeys = ['HOUSE', 'ITNBR', 'ITDSC', 'LLOCN', 'UNMSR', 'LQNTY', 'DEMAN', 'ITCLS', 'LBHNO'];
+                } else {
+                    // Dynamic headers cho các loại dữ liệu khác
+                    columnKeys = Object.keys(data[0]);
+                    headers = columnKeys;
+                }
+                
+                headers.forEach(h => tableHeader.innerHTML += `<th>${h}</th>`);
+                
+                // Log để debug
+                console.log('Mẫu dữ liệu:', data[0]);
+                console.log('Có phải Array?', Array.isArray(data[0]));
+                console.log('Kiểu dữ liệu các trường:', data[0] ? Object.keys(data[0]).map(key => `${key}: ${typeof data[0][key]}`).join(', ') : 'N/A');
+                
+                tableBody.innerHTML = data.map((row, index) => {
+                    // Xử lý object format
+                    if (typeof row === 'object' && !Array.isArray(row) && row !== null) {
+                        if (isOnhandData) {
+                            return `
+                                <tr>
+                                    <td>${this.safeValue(row.HOUSE)}</td>
+                                    <td>${this.safeValue(row.ITNBR)}</td>
+                                    <td title="${this.safeValue(row.ITDSC)}">${this.truncateText(this.safeValue(row.ITDSC), 30)}</td>
+                                    <td>${this.safeValue(row.LLOCN)}</td>
+                                    <td>${this.safeValue(row.UNMSR)}</td>
+                                    <td class="text-end">${this.formatNumber(row.LQNTY)}</td>
+                                    <td class="text-end">${this.formatNumber(row.DEMAN)}</td>
+                                    <td>${this.safeValue(row.ITCLS)}</td>
+                                    <td>${this.safeValue(row.LBHNO)}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-primary" 
+                                                    data-action="check-po" 
+                                                    data-item="${this.safeValue(row.ITNBR)}" 
+                                                    data-house="${this.safeValue(row.HOUSE)}" 
+                                                    title="Kiểm tra PO">
+                                                <i class="fas fa-receipt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-info" 
+                                                    data-action="check-demand" 
+                                                    data-item="${this.safeValue(row.ITNBR)}" 
+                                                    data-house="${this.safeValue(row.HOUSE)}" 
+                                                    title="Kiểm tra Demand">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                        } else {
+                            // Dynamic table cho dữ liệu khác
+                            let cells = '';
+                            columnKeys.forEach(key => {
+                                const value = this.safeValue(row[key]);
+                                cells += `<td title="${value}">${this.truncateText(value, 20)}</td>`;
+                            });
+                            return `<tr>${cells}</tr>`;
+                        }
+                    } 
+                    // Xử lý array format (fallback)
+                    else if (Array.isArray(row)) {
+                        if (isOnhandData) {
+                            return `
+                                <tr>
+                                    <td>${this.safeValue(row[0])}</td>
+                                    <td>${this.safeValue(row[1])}</td>
+                                    <td title="${this.safeValue(row[2])}">${this.truncateText(this.safeValue(row[2]), 30)}</td>
+                                    <td>${this.safeValue(row[3])}</td>
+                                    <td>${this.safeValue(row[4])}</td>
+                                    <td class="text-end">${this.formatNumber(row[5])}</td>
+                                    <td class="text-end">${this.formatNumber(row[6])}</td>
+                                    <td>${this.safeValue(row[7])}</td>
+                                    <td>${this.safeValue(row[8])}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-primary" 
+                                                    data-action="check-po" 
+                                                    data-item="${this.safeValue(row[1])}" 
+                                                    data-house="${this.safeValue(row[0])}" 
+                                                    title="Kiểm tra PO">
+                                                <i class="fas fa-receipt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-info" 
+                                                    data-action="check-demand" 
+                                                    data-item="${this.safeValue(row[1])}" 
+                                                    data-house="${this.safeValue(row[0])}" 
+                                                    title="Kiểm tra Demand">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                        } else {
+                            let cells = '';
+                            row.forEach(cell => {
+                                const value = this.safeValue(cell);
+                                cells += `<td title="${value}">${this.truncateText(value, 20)}</td>`;
+                            });
+                            return `<tr>${cells}</tr>`;
+                        }
+                    }
+                    // Xử lý trường hợp khác
+                    else {
+                        return `<tr><td colspan="${headers.length}">Dữ liệu không đúng định dạng: ${JSON.stringify(row)}</td></tr>`;
+                    }
+                }).join('');
+            }
+
+            // Hàm mới để định dạng số
+            formatNumber(value) {
+                if (value === null || value === undefined || value === '') return '0';
+                const num = parseFloat(value);
+                return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
+            }
+
+            // Hàm mới để cắt ngắn text
+            truncateText(text, maxLength) {
+                if (!text || text.length <= maxLength) return text;
+                return text.substring(0, maxLength) + '...';
+            }
+
+            // Cải thiện hàm safeValue
+            safeValue(value, defaultValue = '') {
+                if (value === null || value === undefined) return defaultValue;
+                if (typeof value === 'string') return value.trim();
+                if (typeof value === 'number') return value.toString();
+                return String(value).trim();
+            }
+
+            showModal(title, data) {
+                document.getElementById('modalTitle').textContent = title;
+                const content = document.getElementById('modalContent');
+                
+                if (data.length === 0) {
+                    content.innerHTML = '<div class="no-data-placeholder"><i class="fas fa-box-open"></i><br>Không tìm thấy dữ liệu cho mặt hàng này.</div>';
+                } else {
+                    const headers = Object.keys(data[0]);
+                    let table = '<table class="table table-sm table-striped table-bordered"><thead><tr>';
+                    headers.forEach(h => table += `<th>${h}</th>`);
+                    table += '</tr></thead><tbody>';
+                    data.forEach(row => {
+                        table += '<tr>';
+                        headers.forEach(h => {
+                            const cell = this.safeValue(row[h]);
+                            const displayValue = typeof row[h] === 'number' ? this.formatNumber(row[h]) : cell;
+                            table += `<td title="${cell}">${displayValue}</td>`;
+                        });
+                        table += '</tr>';
+                    });
+                    table += '</tbody></table>';
+                    content.innerHTML = table;
+                }
+                this.modal.show();
+            }
+
+            exportToExcel() {
+                if (this.currentData.length === 0) {
+                    return this.showToast('warning', 'Xuất Thất Bại', 'Không có dữ liệu để xuất.');
+                }
+                
+                try {
+                    const ws = XLSX.utils.json_to_sheet(this.currentData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'DuLieuTonKho');
+                    const fileName = `DuLieuTonKho_${new Date().toISOString().slice(0,10)}_${Date.now()}.xlsx`;
+                    XLSX.writeFile(wb, fileName);
+                    this.showToast('success', 'Xuất Thành Công', `File ${fileName} đã được tải xuống.`);
+                } catch (error) {
+                    this.showToast('danger', 'Xuất Thất Bại', error.message);
+                }
+            }
+
+            updateUIState() {
+                document.getElementById('connectBtn').disabled = this.isConnected;
+                document.getElementById('disconnectBtn').disabled = !this.isConnected;
+                ['username', 'password', 'host'].forEach(id => { 
+                    document.getElementById(id).disabled = this.isConnected; 
+                });
+                document.getElementById('queryPanel').classList.toggle('d-none', !this.isConnected);
+                if (!this.isConnected) {
+                    document.getElementById('resultsPanel').classList.add('d-none');
+                }
+            }
+
+            setLoading(isLoading, text) {
+                document.getElementById('loadingText').textContent = text;
+                document.getElementById('loadingOverlay').classList.toggle('d-none', !isLoading);
+            }
+
+            showToast(type, title, message) {
+                const id = 'toast-' + Date.now();
+                const bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[type];
+                const html = `<div id="${id}" class="toast text-white ${bg}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header text-white ${bg}">
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>`;
+                document.querySelector('.toast-container').insertAdjacentHTML('beforeend', html);
+                const toastEl = document.getElementById(id);
+                const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                toast.show();
+                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+            }
+
+            formatInClause(input) {
+                if (!input) return '';
+                const items = input.split(',').map(i => i.trim()).filter(Boolean).map(i => `'${i.replace(/'/g, "''")}'`);
+                return items.length > 0 ? `(${items.join(',')})` : '';
+            }
+            
+            formatJulianDate(date) {
+                const year = date.getFullYear().toString().slice(-2);
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `1${year}${month}${day}`;
+            }
+
+            savePrefs() { 
+                localStorage.setItem('onhandPrefs', JSON.stringify({ 
+                    host: document.getElementById('host').value, 
+                    username: document.getElementById('username').value 
+                })); 
+            }
+            
+            loadPrefs() {
+                const prefs = JSON.parse(localStorage.getItem('onhandPrefs') || '{}');
+                if (prefs.host) document.getElementById('host').value = prefs.host;
+                if (prefs.username) document.getElementById('username').value = prefs.username;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => { new MainApp(); });
+    </script>
+</body>
+</html>
