@@ -1,145 +1,725 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Tồn Kho & PO/Demand - Ashley</title>
+    <title>Ashley Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; font-size: 0.75rem; }
-        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card-header { background-color: #1e3a8a; color: white; padding: 0.4rem 0.8rem; }
-        .card-body { padding: 0.8rem; }
-        .table-responsive { max-height: 65vh; overflow: auto; }
-        .table th { background-color: #1e3a8a; color: white; position: sticky; top: 0; z-index: 2; font-size: 0.7rem; padding: 0.3rem 0.4rem; white-space: nowrap; }
-        .table td { padding: 0.25rem 0.4rem; font-size: 0.7rem; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .modal-xl-custom { max-width: 95vw; }
-        .modal .table th { background-color: #343a40; }
-        .btn-ashley { background-color: #1e3a8a; color: white; }
-        .btn-ashley:hover { background-color: #254a9e; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1060; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .toast-container { z-index: 1070; }
-        .form-label { font-weight: 500; margin-bottom: 0.2rem; font-size: 0.7rem; }
-        .form-control-sm, .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
-        .nav-tabs .nav-link { color: #1e3a8a; padding: 0.4rem 0.8rem; font-size: 0.75rem; }
-        .nav-tabs .nav-link.active { font-weight: bold; background-color: #eef2ff; border-color: #dee2e6 #dee2e6 #eef2ff; }
-        .no-data-placeholder { padding: 3rem; text-align: center; color: #6c757d; }
-        .no-data-placeholder i { font-size: 2.5rem; margin-bottom: 1rem; color: #ced4da; }
-        h4 { font-size: 1rem; }
-        h5 { font-size: 0.85rem; }
-        .btn-group-sm .btn { padding: 0.15rem 0.3rem; font-size: 0.65rem; }
-        .debug-info { background: #f8f9fa; padding: 0.5rem; margin-bottom: 1rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.7rem; border-left: 4px solid #007bff; }
-        .connection-status { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; }
-        .status-connected { background-color: #d4edda; color: #155724; }
-        .status-disconnected { background-color: #f8d7da; color: #721c24; }
+        body {
+            background-color: #f8f9fa;
+            font-size: 0.7rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            cursor: pointer;
+        }
+
+        .card-header:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+        }
+
+        .table th {
+            background-color: #343a40;
+            color: white;
+            position: sticky;
+            top: 0;
+            font-size: 0.7rem;
+            padding: 0.2rem;
+            min-width: 60px;
+        }
+
+        .table td {
+            font-size: 0.7rem;
+            padding: 0.2rem;
+            vertical-align: middle;
+            min-width: 60px;
+            word-wrap: break-word;
+            white-space: nowrap;
+        }
+
+        .table-container {
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            margin: 0 2px;
+            font-size: 0.8rem;
+        }
+
+        .truncate {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .collapse-toggle {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsed .collapse-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .connection-section {
+            transition: all 0.3s ease;
+        }
+
+        .connection-section.minimized .card-body {
+            padding: 0.5rem 1rem;
+        }
+
+        .date-info {
+            font-size: 0.7rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .item-code {
+            font-weight: bold;
+            color: #0066cc;
+        }
+
+        .quantity {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .location-other {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            font-weight: 600;
+            border: 1px solid #c3e6cb;
+        }
+
+        .location-s01st1 {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .location-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        tr.has-special-location {
+            background-color: rgba(212, 237, 218, 0.1);
+        }
+
+        /* Toast notification styling */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+        }
+
+        .toast {
+            min-width: 300px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.show {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Connection status compact view */
+        .connection-status-compact {
+            background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .connection-status-compact .connection-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .connection-status-compact .connection-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Modal rộng hơn cho Demand */
+        .modal-xl-custom {
+            max-width: 98%;
+            width: 98%;
+            margin: 1% auto;
+        }
+
+        /* Table trong modal responsive */
+        .modal-table-container {
+            max-height: 95vh;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .modal-table-container table {
+            font-size: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        .modal-table-container th {
+            font-size: 0.75rem;
+            padding: 0.6rem 0.4rem;
+            white-space: nowrap;
+            text-align: center;
+            font-weight: 600;
+            border-right: 1px solid #495057;
+        }
+
+        .modal-table-container td {
+            padding: 0.5rem 0.4rem;
+            font-size: 0.75rem;
+            border-right: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        /* Shortage check styling */
+        .shortage-row {
+            background-color: rgba(220, 53, 69, 0.05) !important;
+        }
+
+        .shortage-qty {
+            color: #dc3545 !important;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .no-shortage-row {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .shortage-summary {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+
+        /* Enhanced highlighting for completed MOs and pending POs */
+        .table-success {
+            --bs-table-bg: rgba(25, 135, 84, 0.05) !important;
+        }
+
+        .bg-success.bg-opacity-10 {
+            background-color: rgba(25, 135, 84, 0.1) !important;
+            border: 1px solid rgba(25, 135, 84, 0.2) !important;
+        }
+
+        /* Total row styling */
+        .table-info.fw-bold {
+            background-color: rgba(13, 110, 253, 0.1) !important;
+            font-size: 0.8rem;
+        }
+
+        .border-top.border-3 {
+            border-top: 3px solid #0d6efd !important;
+        }
+
+
+        .col-house {
+            width: 60px;
+            text-align: center;
+        }
+
+        .col-item {
+            width: 120px;
+            font-weight: 600;
+            color: #0066cc;
+            text-align: center;
+        }
+
+        .col-desc {
+            width: 200px;
+            max-width: 200px;
+        }
+
+        .col-qty {
+            width: 80px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .col-date {
+            width: 100px;
+            text-align: center;
+        }
+
+        .col-vendor {
+            width: 150px;
+            text-align: center;
+        }
+
+        .col-order {
+            width: 100px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .col-balance {
+            width: 80px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .text-truncate-custom {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Number formatting */
+        .number-positive {
+            color: #28a745;
+        }
+
+        .number-negative {
+            color: #dc3545;
+        }
+
+        .number-zero {
+            color: #6c757d;
+        }
+
+        /* Date formatting */
+        .date-cell {
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+
+        /* PO detail styling */
+        .po-clickable {
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s ease;
+        }
+
+        .po-clickable:hover {
+            color: #0056b3 !important;
+            font-weight: bold;
+        }
+
+        /* Back button styling */
+        .btn-back {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+            color: white;
+        }
+
+        /* ITCL clickable styling */
+        .itcl-clickable {
+            cursor: pointer !important;
+            transition: all 0.2s ease;
+        }
+
+        .itcl-clickable:hover {
+            background-color: #0056b3 !important;
+            transform: scale(1.05);
+        }
+
+        .pivot-shortage-cell {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+        }
+
+        .pivot-total-cell {
+            background-color: rgba(220, 53, 69, 0.2);
+            font-weight: bold;
+            border: 2px solid #dc3545;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-available {
+            background-color: #28a745;
+        }
+
+        .status-pending {
+            background-color: #ffc107;
+        }
+
+        .status-overdue {
+            background-color: #dc3545;
+        }
+
+        /* New column classes for demand table */
+        .col-jobno {
+            width: 120px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+
+        .col-status {
+            width: 80px;
+            text-align: center;
+        }
+
+        .col-line {
+            width: 60px;
+            text-align: center;
+        }
+
+        .col-unit {
+            width: 50px;
+            text-align: center;
+        }
+
+        .col-type {
+            width: 60px;
+            text-align: center;
+        }
+
+        /* Job number styling */
+        code.bg-light {
+            padding: 2px 4px;
+            font-size: 0.7rem;
+            border-radius: 3px;
+        }
+
+        /* Badge improvements */
+        .badge {
+            font-size: 0.65rem;
+            padding: 0.3em 0.6em;
+        }
+
+        /* Date range form cải tiến */
+        .date-range-enhanced {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .date-range-enhanced .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .date-input-group {
+            position: relative;
+        }
+
+        .date-input-group .form-control {
+            padding-right: 2.5rem;
+        }
+
+        .form-control {
+            font-size: 0.7rem;
+            padding: .2rem .6rem;
+        }
+
+        .date-input-group .input-group-text {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .table-responsive {
+            border-radius: 0.375rem;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #a5a8aa !important;
+            vertical-align: middle;
+            padding: 0.1rem 0.2rem;
+        }
+
+        .table-danger th {
+            background-color: #dc3545 !important;
+            color: white !important;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Modal header với date controls */
+        .modal-header-with-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .modal-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .col-desc {
+                width: 180px;
+                max-width: 180px;
+            }
+
+            .col-jobno {
+                width: 100px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .col-desc {
+                width: 150px;
+                max-width: 150px;
+            }
+
+            .col-jobno {
+                width: 90px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .modal-table-container {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .modal-table-container table {
+                min-width: 1200px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
-    <div id="loadingOverlay" class="loading-overlay d-none">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-        <p class="mt-3 fs-6" id="loadingText">Đang kết nối...</p>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div id="loading" class="loading d-none">
+        <div class="text-center">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3">Đang xử lý...</p>
+        </div>
     </div>
 
-    <div class="container-fluid my-3">
-        <div class="row align-items-center mb-3">
+    <div class="container-fluid py-3">
+        <div class="row mb-3">
             <div class="col">
-                <h4 class="mb-0">Hệ Thống Tồn Kho, PO & Demand - Ashley <span class="badge bg-secondary">IBM i ODBC</span></h4>
-            </div>
-            <div class="col-auto">
-                <span id="connectionStatus" class="connection-status status-disconnected">
-                    <i class="fas fa-circle me-1"></i>Chưa kết nối
-                </span>
+                <h4><i class="fas fa-warehouse me-2"></i>Hệ thống Quản lý Tồn kho Ashley</h4>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header"><h5 class="mb-0"><i class="fas fa-plug me-2"></i>Kết Nối IBM i</h5></div>
-            <div class="card-body pb-2">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Máy Chủ</label>
-                        <input type="text" class="form-control form-control-sm" id="host" value="wfvnprod.ashleyfurniture.com">
+        <!-- Connection Panel -->
+        <div class="card mb-3 connection-section" id="connectionSection">
+            <div class="card-header" id="connectionHeader" data-bs-toggle="collapse" data-bs-target="#connectionBody">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-plug me-2"></i>Kết nối IBM i
+                    </h6>
+                    <i class="fas fa-chevron-down collapse-toggle"></i>
+                </div>
+            </div>
+            <div class="collapse show" id="connectionBody">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Máy chủ</label>
+                            <input type="text" class="form-control" id="host" value="wfvnprod.ashleyfurniture.com">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tên đăng nhập</label>
+                            <input type="text" class="form-control" id="username">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Mật khẩu</label>
+                            <input type="password" class="form-control" id="password">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button id="connectBtn" class="btn btn-primary">
+                                    <i class="fas fa-plug me-2"></i>Kết nối
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status Compact (Hidden by default) -->
+        <div class="connection-status-compact mb-3 d-none" id="connectionStatusCompact">
+            <div class="connection-info">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="connectionDetails">Đã kết nối thành công</span>
+            </div>
+            <div class="connection-actions">
+                <button class="btn btn-outline-light btn-sm" id="toggleQueryPanel">
+                    <i class="fas fa-search me-1"></i>Truy vấn
+                </button>
+                <button class="btn btn-outline-light btn-sm" id="disconnectBtn">
+                    <i class="fas fa-sign-out-alt me-1"></i>Thoát
+                </button>
+            </div>
+        </div>
+
+        <!-- Query Panel -->
+        <div id="queryPanel" class="card mb-3 d-none">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-search me-2"></i>Truy vấn dữ liệu</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Kho hàng</label>
+                        <input type="text" class="form-control" id="houses" value="35" placeholder="35,41,42">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mã sản phẩm</label>
+                        <input type="text" class="form-control" id="items" placeholder="100350,A3000324">
+                        <small class="text-muted">Để trống để lấy tất cả sản phẩm</small>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Tài Khoản</label>
-                        <input type="text" class="form-control form-control-sm" id="username" placeholder="User ID">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Mật Khẩu</label>
-                        <input type="password" class="form-control form-control-sm" id="password" placeholder="Password">
-                    </div>
-                    <div class="col-md-5">
-                        <div class="btn-group w-100">
-                            <button id="connectBtn" class="btn btn-ashley btn-sm"><i class="fas fa-plug me-2"></i>Kết Nối</button>
-                            <button id="disconnectBtn" class="btn btn-danger btn-sm" disabled><i class="fas fa-unlink me-2"></i>Ngắt Kết Nối</button>
-                            <button id="testBtn" class="btn btn-info btn-sm"><i class="fas fa-vial me-2"></i>Test</button>
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button id="queryBtn" class="btn btn-success">
+                                <i class="fas fa-database me-2"></i>Tải dữ liệu
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="queryPanel" class="card d-none">
-            <div class="card-body p-2">
-                <ul class="nav nav-pills" id="mainTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="onhand-tab" data-bs-toggle="tab" data-bs-target="#onhand-pane">Tồn Kho</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="demand-tab" data-bs-toggle="tab" data-bs-target="#demand-pane">Cài Đặt Demand</button>
-                    </li>
-                </ul>
-            </div>
-            <div class="tab-content p-3 border-top">
-                <div class="tab-pane fade show active" id="onhand-pane">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label">Lọc Kho (House)</label>
-                            <input type="text" class="form-control form-control-sm" id="houseFilter" value="35" placeholder="VD: 35, 41">
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label">Lọc Mặt Hàng (ITNBR)</label>
-                            <input type="text" class="form-control form-control-sm" id="itemFilter" placeholder="VD: 100350, A3000324">
-                        </div>
-                        <div class="col-md-3">
-                            <button id="loadOnhandBtn" class="btn btn-success btn-sm w-100"><i class="fas fa-database me-2"></i>Tải Tồn Kho</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="demand-pane">
-                     <p class="text-muted small">Đặt khoảng thời gian cho chức năng "Kiểm Tra Demand" và các tùy chọn debug.</p>
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-3">
-                            <label class="form-label">Từ Ngày</label>
-                            <input type="date" class="form-control form-control-sm" id="demandFromDate">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Đến Ngày</label>
-                            <input type="date" class="form-control form-control-sm" id="demandToDate">
-                        </div>
-                        <div class="col-md-3">
-                            <button id="toggleDebugBtn" class="btn btn-outline-secondary btn-sm w-100"><i class="fas fa-bug me-2"></i>Bật/Tắt Debug</button>
-                        </div>
-                        <div class="col-md-3">
-                            <button id="clearDataBtn" class="btn btn-outline-warning btn-sm w-100"><i class="fas fa-trash me-2"></i>Xóa Dữ Liệu</button>
-                        </div>
-                    </div>
+        <!-- Results Panel -->
+        <div id="resultsPanel" class="card d-none">
+            <div class="card-header d-flex justify-content-between">
+                <h6 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Kết quả (<span id="recordCount">0</span> bản ghi)
+                </h6>
+                <div>
+                    <button id="exportBtn" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <div id="resultsPanel" class="card mt-3 d-none">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-table me-2"></i><span id="tableTitle"></span> (<span id="recordCount">0</span> bản ghi)</h5>
-                <button id="exportBtn" class="btn btn-outline-light btn-sm"><i class="fas fa-file-excel me-2"></i>Xuất Excel</button>
-            </div>
-            <div class="card-body p-2">
-                <div id="debugInfo" class="debug-info d-none"></div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped table-hover table-bordered mb-0">
-                        <thead><tr id="tableHeader"></tr></thead>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr id="tableHeader"></tr>
+                        </thead>
                         <tbody id="tableBody"></tbody>
                     </table>
                 </div>
@@ -147,16 +727,48 @@
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="infoModal" tabindex="-1">
-        <div class="modal-dialog modal-xl-custom modal-dialog-scrollable">
+    <!-- Modal for PO/Demand Details -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl-custom">
             <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="modalTitle">Chi Tiết</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <!-- Thay thế toàn bộ phần header và thêm thanh controls mới -->
+
+                <div class="modal-header bg-white text-dark">
+                    <h5 class="modal-title" id="modalTitle">Chi tiết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="modalContent" class="table-responsive"></div>
+                <!-- THANH CONTROLS MỚI -->
+                <div id="modal-controls-bar" class="p-3 bg-light border-bottom d-none">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Nút chung, luôn hiển thị khi thanh controls xuất hiện -->
+                        <div>
+                            <button class="btn btn-info btn-sm" id="modalExportBtn"><i
+                                    class="fas fa-file-excel me-1"></i> Xuất Excel</button>
+                        </div>
+                        <!-- Nhóm controls cho ngày, chỉ hiện khi cần -->
+                        <div id="date-controls-group" class="d-none">
+                            <form class="d-flex align-items-end gap-3">
+                                <div>
+                                    <label class="form-label mb-1 small">Từ ngày</label>
+                                    <input type="date" class="form-control form-control-sm" id="modalFromDate">
+                                </div>
+                                <div>
+                                    <label class="form-label mb-1 small">Đến ngày</label>
+                                    <input type="date" class="form-control form-control-sm" id="modalToDate">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-success btn-sm" id="modalRefreshBtn"><i
+                                            class="fas fa-sync-alt"></i> Cập nhật</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div class="modal-table-container" id="modalContent">
+                        <!-- Nội dung sẽ được load vào đây -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -165,552 +777,2140 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        class MainApp {
+        class InventoryApp {
             constructor() {
-                this.isConnected = false; 
-                this.connectionInfo = null; 
+                this.connected = false;
+                this.connectionInfo = null;
                 this.currentData = [];
-                this.debugMode = false;
-                this.modal = new bootstrap.Modal(document.getElementById('infoModal'));
-                this.bindEvents(); 
-                this.loadPrefs(); 
-                this.initDates();
-                this.updateConnectionStatus();
+                this.modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                this.currentModalData = null;
+                this.currentModalType = null;
+                this.currentModalItem = null;
+                this.currentModalHouse = null;
+                this.queryPanelVisible = false;
+                this.modalStack = [];
+                this.init();
             }
 
-            initDates() {
-                const today = new Date(); 
-                const nextMonth = new Date();
-                nextMonth.setMonth(today.getMonth() + 1);
-                document.getElementById('demandFromDate').valueAsDate = today;
-                document.getElementById('demandToDate').valueAsDate = nextMonth;
-            }
-
-            bindEvents() {
+            init() {
+                // Main UI event listeners (connect, disconnect, etc.)
                 document.getElementById('connectBtn').onclick = () => this.connect();
                 document.getElementById('disconnectBtn').onclick = () => this.disconnect();
-                document.getElementById('testBtn').onclick = () => this.testConnection();
-                document.getElementById('loadOnhandBtn').onclick = () => this.loadOnhand();
-                document.getElementById('exportBtn').onclick = () => this.exportToExcel();
-                document.getElementById('toggleDebugBtn').onclick = () => this.toggleDebug();
-                document.getElementById('clearDataBtn').onclick = () => this.clearData();
-                
-                // Event delegation cho các nút trong bảng
+                document.getElementById('queryBtn').onclick = () => this.loadData();
+                document.getElementById('exportBtn').onclick = () => this.exportExcel();
+                document.getElementById('modalExportBtn').onclick = () => this.exportModalData();
+                document.getElementById('toggleQueryPanel').onclick = () => this.toggleQueryPanel();
+                document.getElementById('modalRefreshBtn').onclick = () => this.refreshModalData();
+
+                // Table action delegation
                 document.getElementById('tableBody').addEventListener('click', (e) => {
-                    if (e.target.closest('[data-action]')) {
-                        this.handleTableAction(e);
+                    if (e.target.closest('.check-po-btn')) {
+                        this.checkPO(e.target.closest('.check-po-btn'));
+                    } else if (e.target.closest('.check-demand-btn')) {
+                        this.checkDemand(e.target.closest('.check-demand-btn'));
+                    } else if (e.target.closest('.check-shortage-btn')) {
+                        this.checkShortage(e.target.closest('.check-shortage-btn'));
                     }
                 });
-                
-                document.getElementById('password').addEventListener('keypress', e => { 
-                    if (e.key === 'Enter') this.connect(); 
-                });
 
-                // Auto-save preferences
-                ['host', 'username'].forEach(id => {
-                    document.getElementById(id).addEventListener('change', () => this.savePrefs());
-                });
-            }
-
-            updateConnectionStatus() {
-                const statusEl = document.getElementById('connectionStatus');
-                if (this.isConnected) {
-                    statusEl.className = 'connection-status status-connected';
-                    statusEl.innerHTML = '<i class="fas fa-circle me-1"></i>Đã kết nối';
-                } else {
-                    statusEl.className = 'connection-status status-disconnected';
-                    statusEl.innerHTML = '<i class="fas fa-circle me-1"></i>Chưa kết nối';
-                }
-            }
-
-            toggleDebug() {
-                this.debugMode = !this.debugMode;
-                document.getElementById('debugInfo').classList.toggle('d-none', !this.debugMode);
-                this.showToast('info', 'Debug Mode', this.debugMode ? 'Đã bật chế độ debug' : 'Đã tắt chế độ debug');
-            }
-
-            clearData() {
-                this.currentData = [];
-                document.getElementById('resultsPanel').classList.add('d-none');
-                document.getElementById('debugInfo').classList.add('d-none');
-                this.showToast('info', 'Đã Xóa', 'Dữ liệu hiển thị đã được xóa.');
-            }
-
-            async testConnection() {
-                const host = document.getElementById('host').value.trim();
-                const user = document.getElementById('username').value.trim();
-                const pass = document.getElementById('password').value;
-                
-                if (!user || !pass) {
-                    return this.showToast('warning', 'Thiếu Thông Tin', 'Vui lòng nhập tài khoản và mật khẩu để test.');
-                }
-                
-                this.setLoading(true, 'Đang test kết nối...');
-                try {
-                    const testSql = 'SELECT CURRENT USER, CURRENT SERVER FROM SYSIBM.SYSDUMMY1';
-                    const result = await this.fetchApi({ host, username: user, password: pass, sql: testSql });
-                    
-                    if (result.data && result.data.length > 0) {
-                        const data = result.data[0];
-                        this.showToast('success', 'Test Thành Công!', `User: ${Object.values(data)[0]}, Server: ${Object.values(data)[1]}`);
-                    } else {
-                        this.showToast('success', 'Test Thành Công!', 'Kết nối IBM i hoạt động bình thường.');
+                // Event delegation for modal content
+                document.getElementById('modalContent').addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-back-to-previous')) {
+                        this.goBackInModal();
+                    } else if (e.target.closest('.itcl-clickable')) {
+                        e.stopPropagation();
+                        const itcl = e.target.getAttribute('data-itcl');
+                        if (itcl && itcl.trim()) {
+                            this.showITCLShortage(itcl.trim());
+                        }
                     }
-                } catch (err) { 
-                    this.showToast('danger', 'Test Thất Bại', err.message); 
-                } finally { 
-                    this.setLoading(false); 
+
+                    else if (e.target.closest('.po-clickable')) {
+                        e.stopPropagation();
+                        const poNumber = e.target.textContent.trim();
+                        if (poNumber) {
+                            this.showPODetails(poNumber);
+                        }
+                    }
+                    // **THÊM EVENT LISTENER CHO BACK TO ITEM**
+                    else if (e.target.closest('.btn-back-to-item')) {
+                        this.goBackToItemModal();
+                    }
+                    else if (e.target.closest('.btn-modal-export')) {
+                        this.exportModalData();
+                    }
+
+                });
+
+                // Event listener for clickable ITCL in title
+                document.getElementById('modalTitle').addEventListener('click', (e) => {
+                    if (e.target.closest('.itcl-clickable')) {
+                        e.stopPropagation();
+                        const itcl = e.target.getAttribute('data-itcl');
+                        if (itcl && itcl.trim()) {
+                            this.showITCLShortage(itcl.trim());
+                        }
+                    }
+                });
+            }
+
+            goBackInModal() {
+                if (this.modalStack.length === 0) return;
+                const previousState = this.modalStack.pop();
+                this.currentModalData = previousState.data;
+                this.currentModalType = previousState.type;
+                this.showModalEnhanced(previousState.title, previousState.data, previousState.type);
+            }
+
+            async showITCLShortage(itcl) {
+                this.saveCurrentModalState();
+                this.currentModalType = 'itcl-shortage-pivot';
+                this.showLoading(true);
+
+                try {
+                    // 1. Lấy tất cả items trong ITCL này tại kho hiện tại
+                    const itemsInItclSQL = `
+            SELECT DISTINCT B.ITNBR, B.ITDSC 
+            FROM AMFLIBW.ITEMBL A, AMFLIBW.ITEMASA B 
+            WHERE A.ITNBR = B.ITNBR 
+                AND A.ITCLS = '${itcl}' 
+                AND A.HOUSE = '${this.currentModalHouse}'`;
+
+                    const itemsInItcl = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, itemsInItclSQL);
+
+                    if (!itemsInItcl || itemsInItcl.length === 0) {
+                        this.showToast(`Không có item nào thuộc ITCL ${itcl} tại kho ${this.currentModalHouse}.`, 'warning');
+                        this.goBackInModal();
+                        return;
+                    }
+
+                    // 2. Lấy tồn kho cho tất cả items
+                    const itemNumbers = itemsInItcl.map(i => i.ITNBR);
+                    const inventories = await this.getInventoryForItems(itemNumbers, this.currentModalHouse);
+
+                    // 3. Lấy nhu cầu cho tất cả items
+                    const itemListSQL = itemNumbers.map(i => `'${i}'`).join(',');
+                    const allDemandsSQL = `
+            SELECT 
+                C.ODUDT, 
+                A.CITEM,
+                A.CDESC,
+                CAST(SUM(A.QTREQ - A.ISQTY) AS DECIMAL(12,2)) as BALANCE 
+            FROM AMFLIBW.MOMAST C, AMFLIBW.MODATA A 
+            WHERE C.ORDNO = A.ORDNO 
+                AND A.CITEM IN (${itemListSQL}) 
+                AND A.CITWH = '${this.currentModalHouse}' 
+                AND (A.QTREQ - A.ISQTY) > 0 
+            GROUP BY C.ODUDT, A.CITEM, A.CDESC
+            ORDER BY C.ODUDT, A.CITEM`;
+
+                    const allDemands = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, allDemandsSQL);
+
+                    // 4. Tạo pivot data cho ITCL
+                    const pivotData = this.createITCLPivot(allDemands, inventories, itemsInItcl, itcl);
+
+                    this.currentModalData = pivotData;
+                    const modalTitle = `THIẾU HÀNG THEO ITCL - <strong>${itcl}</strong> (${itemsInItcl.length} items)`;
+                    this.showModalEnhanced(modalTitle, pivotData, 'itcl-shortage-pivot');
+
+                } catch (error) {
+                    console.error('ITCL Shortage Error:', error);
+                    this.showToast('Lỗi tải dữ liệu thiếu hàng theo ITCL: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
                 }
             }
 
-            async connect() {
-                const host = document.getElementById('host').value.trim();
-                const user = document.getElementById('username').value.trim();
-                const pass = document.getElementById('password').value;
-                if (!user || !pass) return this.showToast('danger', 'Lỗi', 'Tài khoản và mật khẩu là bắt buộc.');
-                
-                this.setLoading(true, 'Đang kết nối đến IBM i...');
-                try {
-                    await this.fetchApi({ host, username: user, password: pass, sql: 'SELECT CURRENT USER FROM SYSIBM.SYSDUMMY1' });
-                    this.isConnected = true; 
-                    this.connectionInfo = { host, username: user, password: pass };
-                    this.updateUIState(); 
-                    this.updateConnectionStatus();
-                    this.savePrefs();
-                    this.showToast('success', 'Đã Kết Nối!', `Kết nối thành công với tài khoản ${user.toUpperCase()}.`);
-                } catch (err) { 
-                    this.showToast('danger', 'Kết Nối Thất Bại', err.message); 
-                } finally { 
-                    this.setLoading(false); 
-                }
+            // Sửa hàm createITCLPivot
+            createITCLPivot(allDemands, inventories, itemsInItcl, itcl) {
+                const allDates = new Set();
+                const pivotRows = [];
+                let hasAnyShortage = false;
+
+                itemsInItcl.forEach(itemInfo => {
+                    const item = itemInfo.ITNBR;
+                    const currentInventory = inventories[item] || 0;
+
+                    // Lấy nhu cầu của item này
+                    const itemDemands = allDemands.filter(d => d.CITEM.trim() === item.trim());
+
+                    if (itemDemands.length === 0) {
+                        return; // Không có nhu cầu
+                    }
+
+                    // Group demand theo ngày cho item này
+                    const demandByDate = {};
+                    itemDemands.forEach(row => {
+                        const dateKey = this.formatDateForPivot(row.ODUDT);
+                        if (dateKey) {
+                            const demand = parseFloat(row.BALANCE) || 0;
+                            demandByDate[dateKey] = (demandByDate[dateKey] || 0) + demand;
+                        }
+                    });
+
+                    // Tính shortage theo từng ngày
+                    let runningInventory = currentInventory;
+                    let itemTotalShortage = 0;
+                    const itemDateShortages = {};
+
+                    // Sort dates
+                    const sortedDates = Object.keys(demandByDate).sort((a, b) => {
+                        try {
+                            const dateA = new Date(a.split('/').reverse().join('-'));
+                            const dateB = new Date(b.split('/').reverse().join('-'));
+                            return dateA - dateB;
+                        } catch (e) {
+                            return 0;
+                        }
+                    });
+
+                    sortedDates.forEach(dateKey => {
+                        const totalDemandForDate = demandByDate[dateKey];
+
+                        if (runningInventory < totalDemandForDate) {
+                            const shortage = totalDemandForDate - runningInventory;
+                            hasAnyShortage = true;
+                            allDates.add(dateKey);
+                            itemDateShortages[dateKey] = shortage;
+                            itemTotalShortage += shortage;
+                            runningInventory = 0; // Hết hàng
+                        } else {
+                            runningInventory -= totalDemandForDate;
+                        }
+                    });
+
+                    // Chỉ thêm row nếu có shortage
+                    if (itemTotalShortage > 0) {
+                        pivotRows.push({
+                            ITCL: itcl,
+                            CITEM: item,
+                            CDESC: itemInfo.ITDSC,
+                            dates: itemDateShortages,
+                            grandTotal: itemTotalShortage,
+                            currentInventory: currentInventory
+                        });
+                    }
+                });
+
+                const sortedDates = Array.from(allDates).sort((a, b) => {
+                    try {
+                        const dateA = new Date(a.split('/').reverse().join('-'));
+                        const dateB = new Date(b.split('/').reverse().join('-'));
+                        return dateA - dateB;
+                    } catch (e) {
+                        return 0;
+                    }
+                });
+
+                return {
+                    headers: ['ITCL', 'CITEM', 'CDESC', ...sortedDates, 'Grand Total'],
+                    rows: pivotRows,
+                    allDates: sortedDates,
+                    hasShortage: hasAnyShortage,
+                    totalItems: itemsInItcl.length
+                };
             }
+            generateITCLShortagePivotTable(data) {
+                if (!data || !data.rows) {
+                    return '<div class="text-center p-5"><h5>Không có dữ liệu</h5></div>';
+                }
+
+                let html = '';
+
+                // **GỘP THÔNG TIN, NÚT QUAY LẠI VÀ NÚT XUẤT EXCEL CÙNG 1 HÀNG**
+                html += `
+    <div class="bg-light p-3 border-bottom">
+        <div class="row align-items-center">
+            <!-- Nút Quay lại bên trái -->
+            <div class="col-md-2">
+                ${this.modalStack.length > 0 ? `
+                    <button class="btn btn-back btn-sm btn-back-to-previous">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </button>
+                ` : ''}
+            </div>
             
-            disconnect() {
-                this.isConnected = false; 
-                this.connectionInfo = null; 
-                this.updateUIState();
-                this.updateConnectionStatus();
-                this.clearData();
-                this.showToast('info', 'Đã Ngắt Kết Nối', 'Kết nối đến IBM i đã được đóng.');
+            <!-- Thông tin ở giữa -->
+            <div class="col-md-8">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <strong>ITCL:</strong> 
+                        <span class="badge bg-primary">${data.rows.length > 0 ? data.rows[0].ITCL : ''}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Kho:</strong> 
+                        <span class="badge bg-secondary">${this.currentModalHouse}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Tổng items:</strong> 
+                        <span class="badge bg-info">${data.totalItems || 0}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Items thiếu hàng:</strong> 
+                        <span class="badge bg-${data.rows.length > 0 ? 'danger' : 'success'}">${data.rows.length}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút Xuất Excel bên phải -->
+            <div class="col-md-2 text-end">
+                <button class="btn btn-info btn-sm btn-modal-export">
+                    <i class="fas fa-file-excel me-1"></i> Xuất Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    `;
+
+                // Kiểm tra không có thiếu hàng
+                if (!data.hasShortage || data.rows.length === 0) {
+                    html += `
+        <div class="text-center p-5 bg-success bg-opacity-10">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5 class="text-success">Đủ hàng</h5>
+            <p>Tất cả items trong ITCL này đều đủ hàng để đáp ứng nhu cầu sản xuất.</p>
+        </div>
+        `;
+                    return html;
+                }
+
+                // Bảng pivot
+                html += `
+    <div class="table-responsive" style="max-height: 90vh; overflow-y: auto;">
+        <table class="table table-bordered table-hover mb-0" style="font-size: 0.75rem;">
+            <thead class="table-danger" style="position: sticky; top: 0; z-index: 10;">
+                <tr style="background-color: #dc3545; color: white;">
+    `;
+
+                // Headers
+                data.headers.forEach(header => {
+                    let headerText = header;
+                    let headerClass = 'text-center';
+
+                    if (header === 'CDESC') {
+                        headerClass = 'text-left';
+                    } else if (header === 'Grand Total') {
+                        headerClass = 'text-center';
+                    }
+
+                    html += `<th class="${headerClass}" style="min-width: 80px; white-space: nowrap;">${headerText}</th>`;
+                });
+
+                html += `
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+                // Rows
+                data.rows.forEach(row => {
+                    html += '<tr>';
+
+                    data.headers.forEach(header => {
+                        let cellValue = '';
+                        let cellClass = 'text-center';
+
+                        if (header === 'ITCL') {
+                            cellValue = `<span class="badge bg-info">${row.ITCL}</span>`;
+                        } else if (header === 'CITEM') {
+                            cellValue = `<strong style="color: #0066cc;">${row.CITEM}</strong>`;
+                        } else if (header === 'CDESC') {
+                            cellValue = `<span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="${row.CDESC}">${row.CDESC}</span>`;
+                            cellClass = 'text-left';
+                        } else if (header === 'Grand Total') {
+                            if (row.grandTotal > 0) {
+                                cellValue = `<strong style="color: #dc3545; font-size: 0.9rem;">${this.formatNumber(row.grandTotal)}</strong>`;
+                            } else {
+                                cellValue = '0';
+                            }
+                            cellClass = 'text-end';
+                        } else {
+                            // Cột ngày
+                            const shortageValue = row.dates[header] || 0;
+                            if (shortageValue > 0) {
+                                cellValue = `<span style="color: #dc3545; font-weight: bold;">${this.formatNumber(shortageValue)}</span>`;
+                            } else {
+                                cellValue = '';
+                            }
+                            cellClass = 'text-end';
+                        }
+
+                        html += `<td class="${cellClass}">${cellValue}</td>`;
+                    });
+
+                    html += '</tr>';
+                });
+
+                html += `
+            </tbody>
+        </table>
+    </div>
+    `;
+
+                return html;
             }
 
-            async loadOnhand() {
-                const houseFilter = this.formatInClause(document.getElementById('houseFilter').value);
-                const itemFilter = this.formatInClause(document.getElementById('itemFilter').value);
-                
-                let sql = `SELECT 
-                    CAST(SLQNTY.HOUSE AS CHAR(10)) AS HOUSE,
-                    CAST(SLQNTY.ITNBR AS CHAR(20)) AS ITNBR, 
-                    CAST(RTRIM(ITEMASA.ITDSC) AS CHAR(50)) AS ITDSC,
-                    CAST(SLQNTY.LLOCN AS CHAR(10)) AS LLOCN,
-                    CAST(ITEMASA.UNMSR AS CHAR(5)) AS UNMSR,
-                    SLQNTY.LQNTY,
-                    ITEMBL.MALQT AS DEMAN,
-                    CAST(ITEMASA.ITCLS AS CHAR(5)) AS ITCLS,
-                    CAST(SLQNTY.LBHNO AS CHAR(20)) AS LBHNO
-                FROM AMFLIBW.ITEMASA ITEMASA, 
-                     AMFLIBW.ITEMBL ITEMBL, 
-                     AMFLIBW.SLQNTY SLQNTY 
-                WHERE ITEMASA.ITNBR = SLQNTY.ITNBR 
-                  AND ITEMBL.HOUSE = SLQNTY.HOUSE 
-                  AND ITEMBL.ITNBR = ITEMASA.ITNBR 
-                  AND ITEMBL.ITNBR = SLQNTY.ITNBR`;
-                
-                if (houseFilter) sql += ` AND SLQNTY.HOUSE IN ${houseFilter}`;
-                if (itemFilter) sql += ` AND SLQNTY.ITNBR IN ${itemFilter}`;
-                sql += ' ORDER BY SLQNTY.ITNBR ASC, SLQNTY.LLOCN DESC';
-                
-                await this.executeQuery(sql, 'Dữ Liệu Tồn Kho', false);
+
+            async getItclForItem(item) {
+                const itclSQL = `SELECT ITCLS FROM AMFLIBW.ITEMASA WHERE ITNBR = '${item}'`;
+                const data = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, itclSQL);
+                return (data && data.length > 0) ? (data[0].ITCLS || '').trim() : '';
             }
 
-            async handleTableAction(e) {
-                const button = e.target.closest('[data-action]');
-                if (!button) return;
-                
-                const action = button.getAttribute('data-action');
+            async getItemInfo(item) {
+                const infoSQL = `SELECT ITNBR, ITCLS, ITDSC FROM AMFLIBW.ITEMASA WHERE ITNBR = '${item}'`;
+                const data = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, infoSQL);
+                return (data && data.length > 0) ? data[0] : { ITNBR: item, ITCLS: '', ITDSC: '' };
+            }
+
+            saveCurrentModalState() {
+                this.modalStack.push({
+                    title: document.getElementById('modalTitle').innerHTML,
+                    data: this.currentModalData,
+                    type: this.currentModalType
+                });
+            }
+
+            pivotShortageData(demandData, inventories, singleItem, itcl, itemInfo) {
+                const pivot = {};
+                const allDates = new Set();
+                const itemsToProcess = itemInfo;
+
+                itemsToProcess.forEach(item => {
+                    const itemNumber = singleItem ? item.ITNBR : item.ITNBR.trim(); // Handle potential whitespace
+                    let runningInventory = inventories[itemNumber] || 0;
+
+                    const itemDemands = demandData.filter(d => (d.CITEM || '').trim() === itemNumber).sort((a, b) => (a.ODUDT || '').localeCompare(b.ODUDT || ''));
+
+                    itemDemands.forEach(demandRow => {
+                        const demand = parseFloat(demandRow.BALANCE) || 0;
+                        const shortage = Math.max(0, demand - Math.max(0, runningInventory));
+
+                        if (shortage > 0) {
+                            const date = this.formatDate(demandRow.ODUDT);
+                            allDates.add(date);
+
+                            if (!pivot[itemNumber]) {
+                                pivot[itemNumber] = {
+                                    ITCL: itcl,
+                                    CITEM: itemNumber,
+                                    CDESC: item.ITDSC,
+                                    dates: {},
+                                    grandTotal: 0
+                                };
+                            }
+                            pivot[itemNumber].dates[date] = (pivot[itemNumber].dates[date] || 0) + shortage;
+                            pivot[itemNumber].grandTotal += shortage;
+                        }
+                        runningInventory -= demand;
+                    });
+                });
+
+                const sortedDates = Array.from(allDates).sort((a, b) => new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-')));
+                return { pivotData: Object.values(pivot), allDates: sortedDates };
+            }
+
+
+            async getInventoryForItem(item, house) {
+                const inventorySQL = `SELECT LQNTY FROM AMFLIBW.SLQNTY WHERE ITNBR = '${item}' AND HOUSE = '${house}'`;
+                const data = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, inventorySQL);
+                return (data && data.length > 0) ? parseFloat(data[0].LQNTY) || 0 : 0;
+            }
+
+            async getInventoryForItems(items, house) {
+                if (!items || items.length === 0) return {};
+                const itemList = items.map(i => `'${i}'`).join(',');
+                const inventorySQL = `
+        SELECT ITNBR, SUM(LQNTY) as TOTAL_QTY 
+        FROM AMFLIBW.SLQNTY 
+        WHERE ITNBR IN (${itemList}) AND HOUSE = '${house}' 
+        GROUP BY ITNBR`;
+
+                const data = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, inventorySQL);
+                const inventoryMap = {};
+                if (data) {
+                    data.forEach(row => inventoryMap[row.ITNBR.trim()] = parseFloat(row.TOTAL_QTY) || 0);
+                }
+                return inventoryMap;
+            }
+
+            calculateITCLShortage(allDemands, inventories, itemsInItcl, itcl) {
+                const results = [];
+
+                // Header info
+                results.push({
+                    type: 'itcl-header',
+                    itcl: itcl,
+                    totalItems: itemsInItcl.length,
+                    house: this.currentModalHouse
+                });
+
+                let hasAnyShortage = false;
+
+                itemsInItcl.forEach(itemInfo => {
+                    const item = itemInfo.ITNBR;
+                    const currentInventory = inventories[item] || 0;
+
+                    // Lấy nhu cầu của item này
+                    const itemDemands = allDemands.filter(d => d.CITEM.trim() === item.trim());
+
+                    if (itemDemands.length === 0) {
+                        return; // Không có nhu cầu thì bỏ qua
+                    }
+
+                    // Tính thiếu hàng cho item này
+                    let runningInventory = currentInventory;
+                    const itemShortages = [];
+
+                    itemDemands.forEach(demand => {
+                        const demandQty = parseFloat(demand.BALANCE) || 0;
+                        const shortage = Math.max(0, demandQty - runningInventory);
+
+                        if (shortage > 0) {
+                            hasAnyShortage = true;
+                            itemShortages.push({
+                                type: 'itcl-shortage-detail',
+                                item: item,
+                                description: itemInfo.ITDSC,
+                                date: demand.ODUDT,
+                                demand: demandQty,
+                                beforeInventory: runningInventory,
+                                shortage: shortage,
+                                currentInventory: currentInventory
+                            });
+                        }
+
+                        runningInventory = Math.max(0, runningInventory - demandQty);
+                    });
+
+                    // Thêm kết quả của item này vào results
+                    results.push(...itemShortages);
+                });
+
+                if (!hasAnyShortage) {
+                    results.push({
+                        type: 'itcl-no-shortage',
+                        message: `Tất cả items trong ITCL ${itcl} đều đủ hàng`
+                    });
+                }
+
+                return results;
+            }
+
+            calculateItemShortageForITCL(demandData, currentInventory, item) {
+                if (!demandData || demandData.length === 0) {
+                    return [];
+                }
+
+                let runningInventory = currentInventory;
+                const shortageResults = [];
+
+                // Sort by date
+                demandData.sort((a, b) => {
+                    const dateA = this.parseJulianDate(a.ODUDT);
+                    const dateB = this.parseJulianDate(b.ODUDT);
+                    return dateA - dateB;
+                });
+
+                demandData.forEach(row => {
+                    const demand = parseFloat(row.BALANCE) || 0;
+                    const shortage = Math.max(0, demand - runningInventory);
+
+                    // CHỈ thêm vào kết quả nếu có thiếu hàng
+                    if (shortage > 0) {
+                        shortageResults.push({
+                            SUB_ITEM: row.SUB_ITEM,
+                            SUB_DES: row.SUB_DES,
+                            ITCL: row.ITCL,
+                            ODUDT: row.ODUDT,
+                            DEMAND: demand,
+                            SHORTAGE: shortage,
+                            CURRENT_INVENTORY: currentInventory,
+                            BEFORE_INVENTORY: runningInventory
+                        });
+                    }
+
+                    // Cập nhật tồn kho cho ngày tiếp theo
+                    runningInventory = Math.max(0, runningInventory - demand);
+                });
+
+                return shortageResults;
+            }
+
+            generateITCLShortageTable(data) {
+                if (!data || data.length === 0) {
+                    return '<div class="text-center p-5"><h5>Không có dữ liệu</h5></div>';
+                }
+
+                let html = '';
+
+                // Add back button
+                if (this.modalStack.length > 0) {
+                    html += `
+            <div class="p-2 bg-light border-bottom">
+                <button class="btn btn-back btn-sm btn-back-to-previous">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại thiếu hàng item
+                </button>
+            </div>
+        `;
+                }
+
+                // Header info
+                const headerInfo = data.find(item => item.type === 'itcl-header');
+                if (headerInfo) {
+                    html += `
+            <div class="bg-light p-3 border-bottom">
+                <div class="row">
+                    <div class="col-md-3"><strong>ITCL:</strong> <span class="badge bg-primary">${headerInfo.itcl}</span></div>
+                    <div class="col-md-3"><strong>Kho:</strong> ${headerInfo.house}</div>
+                    <div class="col-md-3"><strong>Tổng items:</strong> ${headerInfo.totalItems}</div>
+                    <div class="col-md-3"></div>
+                </div>
+            </div>
+        `;
+                }
+
+                // Kiểm tra không có thiếu hàng
+                const noShortage = data.find(item => item.type === 'itcl-no-shortage');
+                if (noShortage) {
+                    html += `
+            <div class="text-center p-5 bg-success bg-opacity-10">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5 class="text-success">Đủ hàng</h5>
+                <p>${noShortage.message}</p>
+            </div>
+        `;
+                    return html;
+                }
+
+                // Hiển thị bảng thiếu hàng
+                const shortageItems = data.filter(item => item.type === 'itcl-shortage-detail');
+
+                if (shortageItems.length > 0) {
+                    html += `
+            <table class="table table-striped table-hover">
+                <thead class="table-danger">
+                    <tr>
+                        <th>Mã hàng</th>
+                        <th>Mô tả</th>
+                        <th>Ngày thiếu</th>
+                        <th>Nhu cầu</th>
+                        <th>Tồn kho hiện tại</th>
+                        <th>Số lượng thiếu</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+                    let totalShortage = 0;
+
+                    shortageItems.forEach(item => {
+                        const formattedDate = this.formatDate(item.date);
+                        totalShortage += item.shortage;
+
+                        html += `
+                <tr>
+                    <td><strong class="text-primary">${item.item}</strong></td>
+                    <td class="text-truncate" style="max-width: 200px;" title="${item.description}">${item.description}</td>
+                    <td>${formattedDate}</td>
+                    <td class="text-end">${this.formatNumber(item.demand)}</td>
+                    <td class="text-end">${this.formatNumber(item.currentInventory)}</td>
+                    <td class="text-end text-danger fw-bold">${this.formatNumber(item.shortage)}</td>
+                </tr>
+            `;
+                    });
+
+                    html += `
+                </tbody>
+                <tfoot class="table-dark">
+                    <tr>
+                        <th colspan="5">TỔNG THIẾU HÀNG ITCL</th>
+                        <th class="text-end text-danger">${this.formatNumber(totalShortage)}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+                }
+
+                return html;
+            }
+
+
+            async checkShortage(button) {
+                this.modalStack = [];
                 const item = button.getAttribute('data-item');
                 const house = button.getAttribute('data-house');
-                
-                console.log('Nút được nhấn:', { action, item, house });
-                
-                if (action === 'check-po') {
-                    await this.checkItemPo(item, house);
-                } else if (action === 'check-demand') {
-                    await this.checkItemDemand(item, house);
-                }
-            }
-            
-            async checkItemPo(item, house) {
-                console.log('Kiểm tra PO cho:', item, house);
-                const sql = `SELECT 
-                    CAST(VENDOROPEN.HOUSE AS CHAR(5)) AS WH, 
-                    CAST(VENDOROPEN.ORDNO AS CHAR(10)) AS ORDNO, 
-                    CAST(VENDOROPEN.ITEM AS CHAR(20)) AS ITEM, 
-                    CAST(VENDOROPEN.DSC AS CHAR(30)) AS DSC, 
-                    VENDOROPEN.QTYOR AS ORDER_PO, 
-                    VENDOROPEN.INSQT as RIRP_IQC, 
-                    VENDOROPEN.QTYRT AS VR, 
-                    VENDOROPEN.STKQT, 
-                    VENDOROPEN.BALANCE, 
-                    CAST(VENDOROPEN.VNAMA AS CHAR(30)) AS VNAMA, 
-                    CAST(VENDOROPEN.VNDNR AS CHAR(10)) AS VNDNR, 
-                    CAST(ITEMASA.ITCLS AS CHAR(5)) AS ITCLS, 
-                    VENDOROPEN.DUEDATE 
-                FROM G20ACF9V.VDOWNLOADF.VENDOROPEN VENDOROPEN, AMFLIBW.ITEMASA ITEMASA 
-                WHERE VENDOROPEN.ITEM = ITEMASA.ITNBR 
-                  AND VENDOROPEN.ITEM = '${item}' 
-                  AND VENDOROPEN.HOUSE = '${house}' 
-                ORDER BY VENDOROPEN.ORDNO`;
-                await this.executeQuery(sql, `Trạng Thái PO - Mặt Hàng: ${item}`, true);
+                await this.checkShortageForModal(item, house);
             }
 
-            async checkItemDemand(item, house) {
-                console.log('Kiểm tra Demand cho:', item, house);
-                const fromDateEl = document.getElementById('demandFromDate');
-                const toDateEl = document.getElementById('demandToDate');
-                
-                if (!fromDateEl.value || !toDateEl.value) {
-                    return this.showToast('warning', 'Thiếu Thông Tin', 'Vui lòng đặt khoảng thời gian trong "Cài Đặt Demand".');
-                }
-                
-                const qDate1 = this.formatJulianDate(new Date(fromDateEl.value));
-                const qDate2 = this.formatJulianDate(new Date(toDateEl.value));
 
-                const sql = `SELECT 
-                    A.CITWH AS HOUSE, 
-                    C.ODUDT, 
-                    CAST(A.CITEM AS CHAR(20)) as SUB_ITEM, 
-                    CAST(A.CDESC AS CHAR(30)) AS SUB_DES, 
-                    CAST(C.JOBNO AS CHAR(10)) AS JOBNO, 
-                    CAST(SUM(CAST(A.QTREQ AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SUB_REQ, 
-                    CAST(SUM(CAST(A.ISQTY AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SCAN, 
-                    CAST(SUM(CAST((A.QTREQ-A.ISQTY) AS DECIMAL(12,2))) AS DECIMAL(12,2)) as BALANCE, 
-                    CAST(C.ORDNO AS CHAR(10)) AS ORDNO, 
-                    C.ORQTY, 
-                    CAST(C.FITEM AS CHAR(20)) AS FG_ITEM, 
-                    A.FLSTK, 
-                    CAST(SUBSTR(C.JOBNO,1,4) AS CHAR(4)) AS LINE, 
-                    CAST(A.UNMSR AS CHAR(5)) AS UNIT, 
-                    CAST(B.ITCLAD AS CHAR(5)) AS ITCL, 
-                    CAST(A.OPRWU AS CHAR(10)) as WHERE_USE 
-                FROM AMFLIBW.MOMAST C, AMFLIBW.ITMRVAL0 B, AMFLIBW.MODATA A 
-                WHERE A.CITWH = B.STIDAD 
-                  AND A.CITEM = B.ITNOAD 
-                  AND C.ORDNO = A.ORDNO 
-                  AND C.ODUDT BETWEEN ${qDate1} AND ${qDate2} 
-                  AND C.FITEM = '${item}' 
-                  AND A.CITWH = '${house}' 
-                GROUP BY A.CITWH, C.ODUDT, A.CITEM, A.CDESC, C.JOBNO, C.ORDNO, C.ORQTY, C.FITEM, A.FLSTK, SUBSTR(C.JOBNO,1,4), A.UNMSR, B.ITCLAD, A.OPRWU 
-                ORDER BY C.ODUDT, A.CITEM, C.JOBNO`;
-                
-                await this.executeQuery(sql, `Demand cho Mặt Hàng: ${item} (từ ${fromDateEl.value} đến ${toDateEl.value})`, true);
-            }
+            async checkShortageForModal(item, house) {
+                this.currentModalType = 'shortage-pivot';
+                this.currentModalItem = item;
+                this.currentModalHouse = house;
+                this.showLoading(true);
 
-            async executeQuery(sql, title, isModal = false) {
-                if (!this.isConnected) {
-                    return this.showToast('warning', 'Chưa Kết Nối', 'Vui lòng kết nối đến hệ thống trước.');
-                }
-                
-                this.setLoading(true, `Đang tải ${title}...`);
                 try {
-                    const result = await this.fetchApi({ ...this.connectionInfo, sql });
-                    
-                    console.log('Kết quả truy vấn:', result);
-                    
-                    if (isModal) {
-                        this.showModal(title, result.data);
-                    } else {
-                        this.currentData = result.data;
-                        this.displayTable(result.data, title);
-                    }
-                    this.showToast('info', 'Đã Tải Dữ Liệu', `${result.data.length} bản ghi được tải.`);
-                } catch (err) {
-                    console.error('Lỗi truy vấn:', err);
-                    this.showToast('danger', 'Tải Dữ Liệu Thất Bại', err.message);
-                } finally { 
-                    this.setLoading(false); 
+                    // 1. Lấy TỔNG tồn kho từ tất cả vị trí
+                    const inventorySQL = `SELECT SUM(LQNTY) as TOTAL_QTY FROM AMFLIBW.SLQNTY WHERE ITNBR = '${item}' AND HOUSE = '${house}'`;
+                    const inventoryData = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, inventorySQL);
+                    const currentInventory = (inventoryData && inventoryData.length > 0) ? parseFloat(inventoryData[0].TOTAL_QTY) || 0 : 0;
+
+                    console.log('Current Inventory:', currentInventory); // DEBUG
+
+                    // 2. Lấy thông tin item
+                    const itemInfoSQL = `SELECT ITNBR, ITCLS, ITDSC FROM AMFLIBW.ITEMASA WHERE ITNBR = '${item}'`;
+                    const itemInfoData = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, itemInfoSQL);
+                    const itemInfo = (itemInfoData && itemInfoData.length > 0) ? itemInfoData[0] : { ITNBR: item, ITCLS: '', ITDSC: '' };
+
+                    // 3. Lấy nhu cầu sản xuất
+                    const demandSQL = `
+        SELECT 
+            C.ODUDT, 
+            A.CITEM,
+            A.CDESC,
+            CAST(SUM(A.QTREQ - A.ISQTY) AS DECIMAL(12,2)) as BALANCE 
+        FROM AMFLIBW.MOMAST C, AMFLIBW.MODATA A 
+        WHERE C.ORDNO = A.ORDNO 
+            AND A.CITEM = '${item}' 
+            AND A.CITWH = '${house}' 
+            AND (A.QTREQ - A.ISQTY) > 0 
+        GROUP BY C.ODUDT, A.CITEM, A.CDESC
+        ORDER BY C.ODUDT`;
+
+                    const demandData = await this.executeQuery(this.connectionInfo.host, this.connectionInfo.username, this.connectionInfo.password, demandSQL);
+
+                    // **4. TÍNH TỔNG NHU CẦU**
+                    const totalDemand = demandData.reduce((sum, row) => sum + (parseFloat(row.BALANCE) || 0), 0);
+
+                    // 5. Tạo pivot data cho 1 item và thêm totalDemand
+                    const pivotData = this.createSingleItemPivot(demandData, currentInventory, itemInfo);
+                    // **THÊM TOTAL DEMAND VÀO PIVOT DATA**
+                    pivotData.totalDemand = totalDemand;
+
+                    this.currentModalData = pivotData;
+                    const modalTitle = `THIẾU HÀNG - <strong>${item}</strong>`;
+                    this.showModalEnhanced(modalTitle, pivotData, 'shortage-pivot');
+
+                } catch (error) {
+                    console.error('Lỗi kiểm tra thiếu hàng:', error);
+                    this.showToast('Lỗi tải dữ liệu thiếu hàng: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
                 }
             }
-            
-            async fetchApi(body) {
-                const res = await fetch('/api/query', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(body) 
-                });
-                const result = await res.json();
-                if (!res.ok || !result.success) {
-                    throw new Error(result.error || `Lỗi máy chủ: ${res.status}`);
+
+            // Thay thế hàm createSingleItemPivot
+            createSingleItemPivot(demandData, currentInventory, itemInfo) {
+
+                if (!demandData || demandData.length === 0) {
+                    return {
+                        headers: ['ITCL', 'CITEM', 'CDESC', 'Grand Total'],
+                        rows: [{
+                            ITCL: itemInfo.ITCLS,
+                            CITEM: itemInfo.ITNBR,
+                            CDESC: itemInfo.ITDSC,
+                            dates: {},
+                            grandTotal: 0,
+                            currentInventory: currentInventory
+                        }],
+                        allDates: [],
+                        hasShortage: false
+                    };
                 }
+
+                // Sắp xếp theo ngày
+                const sortedDemandData = [...demandData].sort((a, b) => {
+                    const dateA = this.parseJulianDate(a.ODUDT);
+                    const dateB = this.parseJulianDate(b.ODUDT);
+                    if (!dateA || !dateB) return 0;
+                    return dateA - dateB;
+                });
+
+                // **LOGIC ĐÚNG**: Trừ dần tồn kho từng ngày
+                let runningInventory = currentInventory;
+                let totalShortage = 0;
+                const dateShortages = {};
+                const allShortageDate = new Set();
+
+                sortedDemandData.forEach((row, index) => {
+                    const demandForDate = parseFloat(row.BALANCE) || 0;
+                    const dateKey = this.formatDateForPivot(row.ODUDT);
+
+                    if (!dateKey) {
+                        console.log('  → SKIP: Invalid date');
+                        return;
+                    }
+
+                    // Kiểm tra thiếu hàng cho ngày này
+                    if (runningInventory < demandForDate) {
+                        const shortage = demandForDate - Math.max(0, runningInventory);
+
+                        dateShortages[dateKey] = shortage;
+                        totalShortage += shortage;
+                        allShortageDate.add(dateKey);
+
+                        // Tồn kho về 0 vì đã thiếu
+                        runningInventory = 0;
+                    } else {
+                        // Đủ hàng, trừ tồn kho cho ngày tiếp theo
+                        runningInventory -= demandForDate;
+                    }
+                });
+
+                const result = {
+                    headers: ['ITCL', 'CITEM', 'CDESC', ...Array.from(allShortageDate), 'Grand Total'],
+                    rows: [{
+                        ITCL: itemInfo.ITCLS,
+                        CITEM: itemInfo.ITNBR,
+                        CDESC: itemInfo.ITDSC,
+                        dates: dateShortages,
+                        grandTotal: totalShortage,
+                        currentInventory: currentInventory
+                    }],
+                    allDates: Array.from(allShortageDate),
+                    hasShortage: totalShortage > 0
+                };
                 return result;
             }
 
-            displayTable(data, title = 'Kết Quả') {
-                document.getElementById('resultsPanel').classList.remove('d-none');
-                document.getElementById('tableTitle').textContent = title;
-                document.getElementById('recordCount').textContent = data.length;
-                
-                // Thông tin debug được cải thiện
-                if (this.debugMode) {
-                    const debugInfo = document.getElementById('debugInfo');
-                    debugInfo.classList.remove('d-none');
-                    debugInfo.innerHTML = `
-                        <strong>Debug Info:</strong><br>
-                        - Tổng số bản ghi: ${data.length}<br>
-                        - Kiểu dữ liệu mẫu: ${Array.isArray(data[0]) ? 'Array' : typeof data[0]}<br>
-                        ${data[0] ? `- Keys của dữ liệu mẫu: ${Object.keys(data[0]).join(', ')}<br>` : ''}
-                        ${data[0] ? `- Dữ liệu mẫu: <pre style="margin:0; font-size:0.6rem; max-height:100px; overflow:auto;">${JSON.stringify(data[0], null, 2)}</pre>` : ''}
-                    `;
-                }
-                
-                const tableHeader = document.getElementById('tableHeader');
-                const tableBody = document.getElementById('tableBody');
-                tableHeader.innerHTML = ''; 
-                tableBody.innerHTML = '';
+            formatDateForPivot(julianDate) {
+                try {
+                    if (!julianDate) {
+                        return null;
+                    }
 
-                if (data.length === 0) {
-                    return tableBody.innerHTML = '<tr><td colspan="10" class="no-data-placeholder"><i class="fas fa-info-circle"></i><br>Không tìm thấy dữ liệu với tiêu chí này.</td></tr>';
-                }
-                
-                // Xác định headers dựa trên loại query
-                const isOnhandData = title.includes('Tồn Kho');
-                let headers, columnKeys;
-                
-                if (isOnhandData) {
-                    headers = ['KHO', 'MẶT_HÀNG', 'MÔ_TẢ', 'VỊ_TRÍ', 'ĐVT', 'SL_TỒN', 'DEMAND', 'LOẠI_HH', 'BATCH', 'THAO_TÁC'];
-                    columnKeys = ['HOUSE', 'ITNBR', 'ITDSC', 'LLOCN', 'UNMSR', 'LQNTY', 'DEMAN', 'ITCLS', 'LBHNO'];
-                } else {
-                    // Dynamic headers cho các loại dữ liệu khác
-                    columnKeys = Object.keys(data[0]);
-                    headers = columnKeys;
-                }
-                
-                headers.forEach(h => tableHeader.innerHTML += `<th>${h}</th>`);
-                
-                // Log để debug
-                console.log('Mẫu dữ liệu:', data[0]);
-                console.log('Có phải Array?', Array.isArray(data[0]));
-                console.log('Kiểu dữ liệu các trường:', data[0] ? Object.keys(data[0]).map(key => `${key}: ${typeof data[0][key]}`).join(', ') : 'N/A');
-                
-                tableBody.innerHTML = data.map((row, index) => {
-                    // Xử lý object format
-                    if (typeof row === 'object' && !Array.isArray(row) && row !== null) {
-                        if (isOnhandData) {
-                            return `
-                                <tr>
-                                    <td>${this.safeValue(row.HOUSE)}</td>
-                                    <td>${this.safeValue(row.ITNBR)}</td>
-                                    <td title="${this.safeValue(row.ITDSC)}">${this.truncateText(this.safeValue(row.ITDSC), 30)}</td>
-                                    <td>${this.safeValue(row.LLOCN)}</td>
-                                    <td>${this.safeValue(row.UNMSR)}</td>
-                                    <td class="text-end">${this.formatNumber(row.LQNTY)}</td>
-                                    <td class="text-end">${this.formatNumber(row.DEMAN)}</td>
-                                    <td>${this.safeValue(row.ITCLS)}</td>
-                                    <td>${this.safeValue(row.LBHNO)}</td>
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-primary" 
-                                                    data-action="check-po" 
-                                                    data-item="${this.safeValue(row.ITNBR)}" 
-                                                    data-house="${this.safeValue(row.HOUSE)}" 
-                                                    title="Kiểm tra PO">
-                                                <i class="fas fa-receipt"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-info" 
-                                                    data-action="check-demand" 
-                                                    data-item="${this.safeValue(row.ITNBR)}" 
-                                                    data-house="${this.safeValue(row.HOUSE)}" 
-                                                    title="Kiểm tra Demand">
-                                                <i class="fas fa-chart-line"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                        } else {
-                            // Dynamic table cho dữ liệu khác
-                            let cells = '';
-                            columnKeys.forEach(key => {
-                                const value = this.safeValue(row[key]);
-                                cells += `<td title="${value}">${this.truncateText(value, 20)}</td>`;
-                            });
-                            return `<tr>${cells}</tr>`;
-                        }
-                    } 
-                    // Xử lý array format (fallback)
-                    else if (Array.isArray(row)) {
-                        if (isOnhandData) {
-                            return `
-                                <tr>
-                                    <td>${this.safeValue(row[0])}</td>
-                                    <td>${this.safeValue(row[1])}</td>
-                                    <td title="${this.safeValue(row[2])}">${this.truncateText(this.safeValue(row[2]), 30)}</td>
-                                    <td>${this.safeValue(row[3])}</td>
-                                    <td>${this.safeValue(row[4])}</td>
-                                    <td class="text-end">${this.formatNumber(row[5])}</td>
-                                    <td class="text-end">${this.formatNumber(row[6])}</td>
-                                    <td>${this.safeValue(row[7])}</td>
-                                    <td>${this.safeValue(row[8])}</td>
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-primary" 
-                                                    data-action="check-po" 
-                                                    data-item="${this.safeValue(row[1])}" 
-                                                    data-house="${this.safeValue(row[0])}" 
-                                                    title="Kiểm tra PO">
-                                                <i class="fas fa-receipt"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-info" 
-                                                    data-action="check-demand" 
-                                                    data-item="${this.safeValue(row[1])}" 
-                                                    data-house="${this.safeValue(row[0])}" 
-                                                    title="Kiểm tra Demand">
-                                                <i class="fas fa-chart-line"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                        } else {
-                            let cells = '';
-                            row.forEach(cell => {
-                                const value = this.safeValue(cell);
-                                cells += `<td title="${value}">${this.truncateText(value, 20)}</td>`;
-                            });
-                            return `<tr>${cells}</tr>`;
-                        }
+                    // Xử lý Julian date dạng số (1251001)
+                    const julianStr = julianDate.toString();
+                    if (julianStr.length === 7) {
+                        const yearPart = julianStr.substring(1, 3); // 25
+                        const month = julianStr.substring(3, 5);    // 10
+                        const day = julianStr.substring(5, 7);      // 01
+
+                        // Convert 2-digit year to 4-digit (assuming 20xx)
+                        const year = 2000 + parseInt(yearPart);
+
+                        const result = `${day}/${month}/${year}`;
+                        return result;
                     }
-                    // Xử lý trường hợp khác
-                    else {
-                        return `<tr><td colspan="${headers.length}">Dữ liệu không đúng định dạng: ${JSON.stringify(row)}</td></tr>`;
+
+                    // Nếu không phải Julian format, thử parse khác
+                    const date = this.parseJulianDate(julianDate);
+                    if (!date) {
+                        return null;
                     }
-                }).join('');
+
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+
+                    const result = `${day}/${month}/${year}`;
+                    return result;
+                } catch (e) {
+                    console.warn('Date format error:', e, julianDate);
+                    return null;
+                }
             }
 
-            // Hàm mới để định dạng số
-            formatNumber(value) {
+            generateShortagePivotTable(data) {
+                if (!data || !data.rows || data.rows.length === 0) {
+                    return '<div class="text-center p-5"><h5>Không có dữ liệu thiếu hàng</h5></div>';
+                }
+
+                let html = '';
+                const firstRow = data.rows[0];
+
+                // Header thông tin tồn kho
+                if (firstRow && firstRow.currentInventory !== undefined) {
+                    html += `
+    <div class="bg-light p-3 border-bottom">
+        <div class="row align-items-center">
+
+            <div class="col-md-10">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <strong>Mã hàng:</strong> 
+                        <span class="badge bg-primary">${firstRow.CITEM}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Tổng nhu cầu:</strong> 
+                        <span class="badge bg-info">${this.formatNumber(data.totalDemand || 0)}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Tồn kho hiện tại:</strong> 
+                        <span class="badge bg-success">${this.formatNumber(firstRow.currentInventory)}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Mô tả:</strong> <span class="text-muted">${firstRow.CDESC}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút Xuất Excel bên phải -->
+            <div class="col-md-2 text-end">
+                <button class="btn btn-info btn-sm btn-modal-export">
+                    <i class="fas fa-file-excel me-1"></i> Xuất Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    `;
+                }
+
+                // Kiểm tra có thiếu hàng không
+                const totalShortage = firstRow ? firstRow.grandTotal : 0;
+
+                if (totalShortage === 0 || !data.hasShortage) {
+                    html += `
+        <div class="text-center p-5 bg-success bg-opacity-10">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5 class="text-success">Đủ hàng</h5>
+            <p>Tồn kho hiện tại <strong>${this.formatNumber(firstRow.currentInventory)}</strong> đủ để đáp ứng tất cả nhu cầu sản xuất.</p>
+        </div>
+    `;
+                    return html;
+                }
+
+                // Bảng pivot - CHỈ HIỂN THỊ KHI CÓ THIẾU HÀNG
+                if (data.allDates && data.allDates.length > 0) {
+                    html += `
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0" style="font-size: 0.8rem;">
+                <thead class="table-danger">
+                    <tr style="background-color: #dc3545; color: white;">
+        `;
+
+                    // Headers
+                    data.headers.forEach(header => {
+                        let headerText = header;
+                        let headerClass = 'text-center';
+
+                        if (header === 'CDESC') {
+                            headerClass = 'text-left';
+                        } else if (header === 'Grand Total') {
+                            headerClass = 'text-center';
+                        }
+
+                        html += `<th class="${headerClass}" style="min-width: 80px; white-space: nowrap;">${headerText}</th>`;
+                    });
+
+                    html += `
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+                    // Rows
+                    data.rows.forEach(row => {
+                        html += '<tr>';
+
+                        data.headers.forEach(header => {
+                            let cellValue = '';
+                            let cellClass = 'text-center';
+
+                            if (header === 'ITCL') {
+                                cellValue = `<span class="badge bg-info itcl-clickable" style="cursor:pointer;" data-itcl="${row.ITCL}" title="Click để xem thiếu hàng theo ${row.ITCL}">${row.ITCL}</span>`;
+                            } else if (header === 'CITEM') {
+                                cellValue = `<strong style="color: #0066cc;">${row.CITEM}</strong>`;
+                            } else if (header === 'CDESC') {
+                                cellValue = `<span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="${row.CDESC}">${row.CDESC}</span>`;
+                                cellClass = 'text-left';
+                            } else if (header === 'Grand Total') {
+                                if (row.grandTotal > 0) {
+                                    cellValue = `<strong style="color: #dc3545; font-size: 0.9rem;">${this.formatNumber(row.grandTotal)}</strong>`;
+                                } else {
+                                    cellValue = '0';
+                                }
+                                cellClass = 'text-end';
+                            } else {
+                                // Cột ngày - CHỈ HIỂN THỊ NẾU CÓ THIẾU HÀNG
+                                const shortageValue = row.dates[header] || 0;
+                                if (shortageValue > 0) {
+                                    cellValue = `<span style="color: #dc3545; font-weight: bold;">${this.formatNumber(shortageValue)}</span>`;
+                                } else {
+                                    cellValue = ''; // Để trống nếu không thiếu
+                                }
+                                cellClass = 'text-end';
+                            }
+
+                            html += `<td class="${cellClass}">${cellValue}</td>`;
+                        });
+
+                        html += '</tr>';
+                    });
+
+                    html += `
+                </tbody>
+            </table>
+        </div>
+        `;
+                }
+
+                return html;
+            }
+
+
+            filterDemandByDateRange(demandData, fromDateStr, toDateStr) {
+                if (!demandData || demandData.length === 0) return [];
+                if (!fromDateStr || !toDateStr) return demandData;
+
+                const fromDate = new Date(fromDateStr);
+                const toDate = new Date(toDateStr);
+
+                return demandData.filter(row => {
+                    const demandDate = this.parseJulianDate(row.ODUDT);
+                    if (!demandDate) return false;
+
+                    return demandDate >= fromDate && demandDate <= toDate;
+                });
+            }
+
+            getDateStatus(julianDate) {
+                const date = this.parseJulianDate(julianDate);
+                const today = new Date();
+                const daysDiff = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+
+                if (daysDiff < 0) {
+                    return {
+                        icon: '<i class="fas fa-exclamation-triangle text-danger ms-2" title="Đã quá hạn"></i>',
+                        text: '<span class="badge bg-danger">Đã quá hạn</span>'
+                    };
+                } else if (daysDiff <= 3) {
+                    return {
+                        icon: '<i class="fas fa-clock text-warning ms-2" title="Sắp đến hạn"></i>',
+                        text: '<span class="badge bg-warning">Sắp đến hạn</span>'
+                    };
+                } else {
+                    return {
+                        icon: '<i class="fas fa-calendar text-info ms-2" title="Còn thời gian"></i>',
+                        text: '<span class="badge bg-info">Còn thời gian</span>'
+                    };
+                }
+            }
+
+            async showPODetails(poNumber) {
+                // Save current modal state to stack
+                this.saveCurrentModalState();
+
+                this.showLoading(true);
+
+                try {
+                    const sql = `SELECT VENDOROPEN.HOUSE AS WH, VENDOROPEN.ORDNO, VENDOROPEN.ITEM, VENDOROPEN.DSC, VENDOROPEN.QTYOR AS ORDER_PO, VENDOROPEN.INSQT as RIRP_IQC, VENDOROPEN.QTYRT AS VR, VENDOROPEN.BALANCE, VENDOROPEN.VNAMA, VENDOROPEN.DUEDATE FROM G20ACF9V.VDOWNLOADF.VENDOROPEN VENDOROPEN WHERE VENDOROPEN.ORDNO = '${poNumber}' ORDER BY VENDOROPEN.ITEM`;
+
+                    const data = await this.executeQuery(
+                        this.connectionInfo.host,
+                        this.connectionInfo.username,
+                        this.connectionInfo.password,
+                        sql
+                    );
+
+                    this.currentModalData = data;
+                    this.currentModalType = 'po-detail';
+                    this.showModalEnhanced(`CHI TIẾT PO - <strong>${poNumber}</strong>`, data, 'po-detail');
+
+                } catch (error) {
+                    this.showToast('Lỗi tải chi tiết PO: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            goBackToItemModal() {
+                if (this.modalStack.length === 0) return;
+
+                const previousState = this.modalStack.pop();
+                this.currentModalData = previousState.data;
+                this.currentModalType = previousState.type;
+                this.currentModalItem = previousState.item;
+                this.currentModalHouse = previousState.house;
+
+                // Restore modal content
+                document.getElementById('modalTitle').innerHTML = previousState.title;
+
+                const content = document.getElementById('modalContent');
+                content.innerHTML = this.generateModalTable(previousState.data);
+            }
+
+
+            // Toast notification system
+            showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toastContainer');
+                const toastId = 'toast_' + Date.now();
+
+                let iconClass = 'fas fa-info-circle';
+                let bgClass = 'bg-primary';
+
+                switch (type) {
+                    case 'success':
+                        iconClass = 'fas fa-check-circle';
+                        bgClass = 'bg-success';
+                        break;
+                    case 'error':
+                        iconClass = 'fas fa-exclamation-circle';
+                        bgClass = 'bg-danger';
+                        break;
+                    case 'warning':
+                        iconClass = 'fas fa-exclamation-triangle';
+                        bgClass = 'bg-warning';
+                        break;
+                }
+
+                const toastHTML = `
+                    <div class="toast ${bgClass} text-white" id="${toastId}" role="alert">
+                        <div class="toast-body d-flex align-items-center">
+                            <i class="${iconClass} me-2"></i>
+                            <span class="flex-grow-1">${message}</span>
+                            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+
+                // Remove element after hide
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+            }
+
+            toggleQueryPanel() {
+                const queryPanel = document.getElementById('queryPanel');
+                this.queryPanelVisible = !this.queryPanelVisible;
+
+                if (this.queryPanelVisible) {
+                    queryPanel.classList.remove('d-none');
+                    document.getElementById('toggleQueryPanel').innerHTML = '<i class="fas fa-eye-slash me-1"></i>Ẩn';
+                } else {
+                    queryPanel.classList.add('d-none');
+                    document.getElementById('toggleQueryPanel').innerHTML = '<i class="fas fa-search me-1"></i>Truy vấn';
+                }
+            }
+
+            async checkDemand(button) {
+                this.modalStack = [];
+                const item = button.getAttribute('data-item');
+                const house = button.getAttribute('data-house');
+
+                // Set ngày hiện tại cho modal khi mở lần đầu
+                const today = new Date();
+                const nextMonth = new Date();
+
+                const todayStr = today.toISOString().split('T')[0];
+                const nextMonthStr = nextMonth.toISOString().split('T')[0];
+
+                document.getElementById('modalFromDate').value = todayStr;
+                document.getElementById('modalToDate').value = nextMonthStr;
+
+                await this.checkDemandForModal(item, house);
+            }
+
+            async checkDemandForModal(item, house) {
+                // Lấy dates từ modal
+                const fromDate = this.formatJulianDate(document.getElementById('modalFromDate').value);
+                const toDate = this.formatJulianDate(document.getElementById('modalToDate').value);
+
+                if (!fromDate || !toDate) {
+                    this.showToast('Vui lòng chọn từ ngày và đến ngày trong modal', 'warning');
+                    return;
+                }
+
+                this.currentModalType = 'demand';
+                this.currentModalItem = item;
+                this.currentModalHouse = house;
+
+                console.log('Checking Demand for:', item, house, fromDate, toDate);
+                this.showLoading(true);
+
+                try {
+                    const sql = `SELECT A.CITWH AS HOUSE, C.ODUDT, A.CITEM as SUB_ITEM, ` +
+                        `A.CDESC AS SUB_DES, C.JOBNO, ` +
+                        `CAST(SUM(CAST(A.QTREQ AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SUB_REQ, ` +
+                        `CAST(SUM(CAST(A.ISQTY AS DECIMAL(12,2))) AS DECIMAL(12,2)) AS SCAN, ` +
+                        `CAST(SUM(CAST((A.QTREQ-A.ISQTY) AS DECIMAL(12,2))) AS DECIMAL(12,2)) as BALANCE, ` +
+                        `C.ORDNO, C.ORQTY, C.FITEM AS FG_ITEM, A.FLSTK, ` +
+                        `SUBSTR(C.JOBNO,1,4) AS LINE, A.UNMSR AS UNIT, ` +
+                        `B.ITCLAD AS ITCL, A.OPRWU as WHERE_COL ` +
+                        `FROM AMFLIBW.MOMAST C, AMFLIBW.ITMRVAL0 B, AMFLIBW.MODATA A ` +
+                        `WHERE A.CITWH = B.STIDAD and A.CITEM = B.ITNOAD ` +
+                        `AND C.ORDNO = A.ORDNO ` +
+                        `AND C.ODUDT between '${fromDate}' and '${toDate}' ` +
+                        `AND A.CITEM = '${item}' ` +
+                        `AND A.CITWH = '${house}' ` +
+                        `GROUP BY A.CITWH, C.ODUDT, A.CITEM, A.CDESC, C.JOBNO, ` +
+                        `C.ORDNO, C.ORQTY, C.FITEM, A.FLSTK, SUBSTR(C.JOBNO,1,4), ` +
+                        `A.UNMSR, B.ITCLAD, A.OPRWU ` +
+                        `ORDER BY C.ODUDT, A.CITEM, C.JOBNO`;
+
+                    const data = await this.executeQuery(
+                        this.connectionInfo.host,
+                        this.connectionInfo.username,
+                        this.connectionInfo.password,
+                        sql
+                    );
+
+                    this.currentModalData = data;
+                    const dateRange = `${document.getElementById('modalFromDate').value} → ${document.getElementById('modalToDate').value}`;
+                    this.showModalEnhanced(`NHU CẦU - <strong>${item}</strong>`, data, 'demand', dateRange);
+
+                } catch (error) {
+                    console.error('Demand Error:', error);
+                    this.showToast('Lỗi tải dữ liệu nhu cầu: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async refreshModalData() {
+                if (!this.currentModalItem || !this.currentModalHouse) return;
+
+                if (this.currentModalType === 'demand') {
+                    await this.checkDemandForModal(this.currentModalItem, this.currentModalHouse);
+                } else if (this.currentModalType === 'po') {
+                    await this.checkPOForModal(this.currentModalItem, this.currentModalHouse);
+                } else if (this.currentModalType === 'shortage-pivot') {
+                    await this.checkShortageForModal(this.currentModalItem, this.currentModalHouse);
+                } else {
+                    this.showToast('Không thể refresh loại modal này', 'warning');
+                }
+            }
+
+            async checkPO(button) {
+                this.modalStack = [];
+                const item = button.getAttribute('data-item');
+                const house = button.getAttribute('data-house');
+                await this.checkPOForModal(item, house);
+            }
+
+            async checkPOForModal(item, house) {
+                this.currentModalType = 'po';
+                this.currentModalItem = item;
+                this.currentModalHouse = house; // Này vẫn giữ để track, nhưng không dùng trong query
+
+                this.showLoading(true);
+
+                try {
+                    // **LẤY ĐIỀU KIỆN KHO TỪ Ô INPUT**
+                    const housesInput = document.getElementById('houses').value.trim();
+                    let whereClause = '';
+                    let titleSuffix = '';
+                    let houseList = []; // **KHAI BÁO BIẾN houseList**
+
+                    if (housesInput) {
+                        // Tạo điều kiện WHERE cho các kho
+                        houseList = housesInput.split(',').map(h => h.trim());
+                        const houseConditions = houseList.map(h => `'${h}'`).join(',');
+                        whereClause = ` AND VENDOROPEN.HOUSE IN (${houseConditions})`;
+                        titleSuffix = ` (Kho: ${housesInput})`;
+                    } else {
+                        titleSuffix = ' (Tất cả kho)';
+                    }
+
+                    console.log('Checking PO for:', item, 'houses:', houseList); // **SỬA CONSOLE.LOG**
+
+                    const sql = `SELECT VENDOROPEN.HOUSE AS WH, VENDOROPEN.ORDNO, VENDOROPEN.ITEM, VENDOROPEN.DSC, VENDOROPEN.QTYOR AS ORDER_PO, VENDOROPEN.INSQT as RIRP_IQC, VENDOROPEN.QTYRT AS VR, VENDOROPEN.BALANCE, VENDOROPEN.VNAMA, VENDOROPEN.DUEDATE FROM G20ACF9V.VDOWNLOADF.VENDOROPEN VENDOROPEN WHERE VENDOROPEN.ITEM = '${item}'${whereClause} ORDER BY VENDOROPEN.DUEDATE`;
+
+                    const data = await this.executeQuery(
+                        this.connectionInfo.host,
+                        this.connectionInfo.username,
+                        this.connectionInfo.password,
+                        sql
+                    );
+
+                    this.currentModalData = data;
+                    this.showModalEnhanced(`ĐƠN ĐẶT HÀNG - <strong>${item}</strong>${titleSuffix}`, data, 'po');
+
+                } catch (error) {
+                    console.error('PO Error:', error);
+                    this.showToast('Lỗi tải đơn đặt hàng: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+
+
+            showModalEnhanced(title, data, type) {
+                document.getElementById('modalTitle').innerHTML = title;
+
+                const controlsBar = document.getElementById('modal-controls-bar');
+                const dateControls = document.getElementById('date-controls-group');
+
+                if (controlsBar && dateControls) {
+                    // **ẨN CONTROLS BAR CHO SHORTAGE VÀ ITCL-SHORTAGE**
+                    if (type === 'shortage-pivot' || type === 'itcl-shortage-pivot') {
+                        controlsBar.classList.add('d-none');
+                    } else {
+                        controlsBar.classList.remove('d-none');
+
+                        if (type === 'demand') {
+                            dateControls.classList.remove('d-none');
+                        } else {
+                            dateControls.classList.add('d-none');
+                        }
+                    }
+                }
+
+                let content = '';
+                switch (type) {
+                    case 'shortage-pivot':
+                        content = this.generateShortagePivotTable(data);
+                        break;
+                    case 'itcl-shortage-pivot':
+                        content = this.generateITCLShortagePivotTable(data);
+                        break;
+                    case 'po':
+                    case 'po-detail':
+                        content = this.generatePOTable(data);
+                        break;
+                    case 'demand':
+                        content = this.generateDemandTable(data);
+                        break;
+                    default:
+                        content = '<div class="p-5 text-center">Loại dữ liệu không được hỗ trợ</div>';
+                }
+
+                document.getElementById('modalContent').innerHTML = content;
+                this.modal.show();
+            }
+
+            generateModalTable(data) {
+                // Router để gọi đúng hàm render cho từng loại bảng
+                if (this.currentModalType === 'shortage-pivot' || this.currentModalType === 'itcl-shortage-pivot') {
+                    return this.generateShortagePivotTable(data);
+                }
+                if (this.currentModalType === 'po' || this.currentModalType === 'po-detail') {
+                    return this.generatePOTable(data); // Đảm bảo bạn còn hàm này
+                }
+                if (this.currentModalType === 'demand') {
+                    return this.generateDemandTable(data); // Đảm bảo bạn còn hàm này
+                }
+                return `<div class="p-5 text-center">Định dạng bảng "<strong>${this.currentModalType}</strong>" không được hỗ trợ.</div>`;
+            }
+
+
+            generatePOTable(data) {
+                let table = '';
+
+                // Add back button for PO detail view
+                if (this.currentModalType === 'po-detail' && this.modalStack.length > 0) {
+                    table += `
+                <div class="p-3 bg-light border-bottom">
+                    <button class="btn btn-back btn-sm btn-back-to-item">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách PO theo item
+                    </button>
+                </div>
+            `;
+                }
+
+                table += '<table class="table table-sm table-striped table-hover mb-0"><thead class="table-dark"><tr>';
+
+                // Define PO column order and headers
+                const poColumns = [
+                    { key: 'WH', header: 'Kho', class: 'col-house' },
+                    { key: 'ITEM', header: 'Mã hàng', class: 'col-item' },
+                    { key: 'DSC', header: 'Mô tả', class: 'col-desc' },
+                    { key: 'ORDNO', header: 'Số PO', class: 'col-order' },
+                    { key: 'ORDER_PO', header: 'SL Đặt', class: 'col-qty' },
+                    { key: 'RIRP_IQC', header: 'SL Nhận', class: 'col-qty' },
+                    { key: 'VR', header: 'SL VR(Trả VD)', class: 'col-qty' },
+                    { key: 'BALANCE', header: 'Chưa nhập', class: 'col-balance' },
+                    { key: 'VNAMA', header: 'Nhà cung cấp', class: 'col-vendor' },
+                    { key: 'DUEDATE', header: 'Ngày giao', class: 'col-date' }
+                ];
+
+                // Generate headers
+                poColumns.forEach(col => {
+                    table += `<th class="${col.class}">${col.header}</th>`;
+                });
+                table += '</tr></thead><tbody>';
+
+                // Generate rows
+                data.forEach(row => {
+                    table += '<tr>';
+                    poColumns.forEach(col => {
+                        let value = this.safeValue(row[col.key]);
+                        let cellClass = col.class;
+                        let formattedValue = value;
+
+                        // Special formatting based on column type
+                        switch (col.key) {
+                            case 'ORDNO':
+                                const balance = parseFloat(this.safeValue(row.BALANCE)) || 0;
+                                // **CHỈ TẠO CLICKABLE KHI Ở CHẾ ĐỘ 'po' (DANH SÁCH PO)**
+                                if (this.currentModalType === 'po') {
+                                    if (balance > 0) {
+                                        formattedValue = `<span class="po-clickable text-success bg-opacity-10 px-2 py-1 rounded" style="cursor: pointer; text-decoration: underline;" title="Click để xem chi tiết PO">${value}</span>`;
+                                    } else {
+                                        formattedValue = `<span class="po-clickable text-primary" style="cursor: pointer; text-decoration: underline;" title="Click để xem chi tiết PO">${value}</span>`;
+                                    }
+                                } else {
+                                    // **Ở CHẾ ĐỘ 'po-detail' THÌ KHÔNG CLICKABLE**
+                                    if (balance > 0) {
+                                        formattedValue = `<strong class="text-success bg-opacity-10 px-2 py-1 rounded">${value}</strong>`;
+                                    } else {
+                                        formattedValue = `<strong class="text-primary">${value}</strong>`;
+                                    }
+                                }
+                                break;
+
+                            case 'RIRP_IQC':
+                            case 'VR':
+                            case 'ORDER_PO':
+                                formattedValue = this.formatModalNumber(value);
+                                break;
+
+                            case 'BALANCE':
+                                formattedValue = this.formatModalNumber(value);
+                                const num = parseFloat(value);
+                                formattedValue = `<strong>${formattedValue}</strong>`;
+                                if (num > 0) cellClass += ' number-positive';
+                                else if (num < 0) cellClass += ' number-negative';
+                                else cellClass += ' number-zero';
+                                break;
+
+                            case 'DUEDATE':
+                                formattedValue = this.formatDate(value);
+                                cellClass += ' date-cell';
+
+                                // Add status indicator for due date
+                                const today = new Date();
+                                const dueDate = this.parseJulianDate(value);
+                                if (dueDate) {
+                                    if (dueDate < today) {
+                                        formattedValue = `<span class="status-indicator status-overdue"></span>${formattedValue}`;
+                                    } else if (dueDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+                                        formattedValue = `<span class="status-indicator status-pending"></span>${formattedValue}`;
+                                    } else {
+                                        formattedValue = `<span class="status-indicator status-available"></span>${formattedValue}`;
+                                    }
+                                }
+                                break;
+
+                            case 'DSC':
+                                if (value.length > 30) {
+                                    formattedValue = `<span class="text-truncate-custom" title="${value}">${value}</span>`;
+                                }
+                                break;
+
+                            case 'VNAMA':
+                                if (value.length > 20) {
+                                    formattedValue = `<span class="text-truncate-custom" title="${value}">${value.substring(0, 20)}...</span>`;
+                                }
+                                break;
+
+                            case 'ITEM':
+                                formattedValue = `<strong>${value}</strong>`;
+                                break;
+                        }
+
+                        table += `<td class="${cellClass}">${formattedValue}</td>`;
+                    });
+                    table += '</tr>';
+                });
+
+                table += '</tbody></table>';
+                return table;
+            }
+
+
+            generateDemandTable(data) {
+                let table = '<table class="table table-sm table-striped table-hover mb-0"><thead class="table-dark"><tr>';
+
+                // Define Demand column order theo dữ liệu thực tế từ SQL
+                const demandColumns = [
+                    { key: 'HOUSE', header: 'Kho', class: 'col-house' },
+                    { key: 'ODUDT', header: 'Ngày', class: 'col-date' },
+                    { key: 'ORDNO', header: 'MO', class: 'col-order' },
+                    { key: 'SUB_REQ', header: 'SL Yêu cầu', class: 'col-qty' },
+                    { key: 'SCAN', header: 'Đã scan', class: 'col-qty' },
+                    { key: 'BALANCE', header: 'Chưa scan', class: 'col-balance' },
+                    { key: 'FG_ITEM', header: 'FG', class: 'col-item' },
+                    { key: 'ORQTY', header: 'SL FG', class: 'col-qty' },
+                    { key: 'JOBNO', header: 'JobNo', class: 'col-jobno' },
+                    { key: 'LINE', header: 'Line', class: 'col-line' },
+                    { key: 'UNIT', header: 'ĐVT', class: 'col-unit' },
+                    { key: 'ITCL', header: 'ITCLs', class: 'col-type' }
+                ];
+
+                // Generate headers
+                demandColumns.forEach(col => {
+                    table += `<th class="${col.class}">${col.header}</th>`;
+                });
+                table += '</tr></thead><tbody>';
+
+                let totalBalance = 0;
+
+                // Generate rows
+                data.forEach((row, index) => {
+                    const balanceValue = parseFloat(this.safeValue(row.BALANCE)) || 0;
+                    totalBalance += balanceValue;
+                    table += '<tr>';
+                    demandColumns.forEach(col => {
+                        let value = this.safeValue(row[col.key]);
+                        let cellClass = col.class;
+                        let formattedValue = value;
+
+                        // Special formatting based on column type
+                        switch (col.key) {
+                            case 'SUB_REQ':
+                            case 'SCAN':
+                            case 'ORQTY':
+                                formattedValue = this.formatModalNumber(value);
+                                if (parseFloat(value) > 0) cellClass += ' number-positive';
+                                break;
+
+                            case 'BALANCE':
+                                formattedValue = this.formatModalNumber(value);
+                                const num = parseFloat(value);
+                                if (num > 0) {
+                                    cellClass += ' number-positive';
+                                    formattedValue = `<strong>${formattedValue}</strong>`;
+                                } else if (num < 0) {
+                                    cellClass += ' number-negative';
+                                    formattedValue = `<strong>${formattedValue}</strong>`;
+                                } else {
+                                    cellClass += ' number-zero';
+                                }
+                                break;
+
+                            case 'ODUDT':
+                                formattedValue = this.formatDate(value);
+                                cellClass += ' date-cell';
+                                break;
+
+                            case 'JOBNO':
+                                if (value && value.length > 25) {
+                                    formattedValue = `<span class="text-truncate-custom" title="${value}">${value}</span>`;
+                                }
+                                break;
+
+                            case 'ORDNO':
+                                const balance = parseFloat(this.safeValue(row.BALANCE)) || 0;
+                                if (balance != 0) {
+                                    formattedValue = `<strong class="text-success bg-opacity-10 px-2 py-1 rounded">${value}</strong>`;
+
+                                } else {
+
+                                }
+                                break;
+
+                            case 'LINE':
+                                if (value) {
+                                    formattedValue = `<span class="badge bg-dark">${value}</span>`;
+                                }
+                                break;
+
+                            case 'UNIT':
+                            case 'ITCL':
+                                if (value) {
+                                    formattedValue = `<small class="text-muted">${value}</small>`;
+                                }
+                                break;
+                        }
+
+                        table += `<td class="${cellClass}">${formattedValue}</td>`;
+                    });
+                    table += '</tr>';
+                });
+
+                table += '<tr class="table-info fw-bold border-top border-3">';
+                demandColumns.forEach((col, index) => {
+                    if (col.key === 'ORDNO') {
+                        table += '<td class="fw-bold">TỔNG CỘNG:</td>';
+                    } else if (col.key === 'BALANCE') {
+                        const totalFormatted = totalBalance.toLocaleString('vi-VN');
+                        let totalClass = 'fw-bold text-center';
+                        if (totalBalance > 0) totalClass += ' text-danger';
+                        else if (totalBalance < 0) totalClass += ' text-warning';
+                        else totalClass += ' text-success';
+
+                        table += `<td class="${totalClass}">${totalFormatted}</td>`;
+                    } else {
+                        table += '<td></td>';
+                    }
+                });
+                table += '</tr>';
+
+                table += '</tbody></table>';
+                return table;
+            }
+
+
+            formatModalNumber(value) {
                 if (value === null || value === undefined || value === '') return '0';
                 const num = parseFloat(value);
                 return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
             }
 
-            // Hàm mới để cắt ngắn text
-            truncateText(text, maxLength) {
-                if (!text || text.length <= maxLength) return text;
-                return text.substring(0, maxLength) + '...';
-            }
+            formatDate(value) {
+                if (!value) return '';
 
-            // Cải thiện hàm safeValue
-            safeValue(value, defaultValue = '') {
-                if (value === null || value === undefined) return defaultValue;
-                if (typeof value === 'string') return value.trim();
-                if (typeof value === 'number') return value.toString();
-                return String(value).trim();
-            }
-
-            showModal(title, data) {
-                document.getElementById('modalTitle').textContent = title;
-                const content = document.getElementById('modalContent');
-                
-                if (data.length === 0) {
-                    content.innerHTML = '<div class="no-data-placeholder"><i class="fas fa-box-open"></i><br>Không tìm thấy dữ liệu cho mặt hàng này.</div>';
-                } else {
-                    const headers = Object.keys(data[0]);
-                    let table = '<table class="table table-sm table-striped table-bordered"><thead><tr>';
-                    headers.forEach(h => table += `<th>${h}</th>`);
-                    table += '</tr></thead><tbody>';
-                    data.forEach(row => {
-                        table += '<tr>';
-                        headers.forEach(h => {
-                            const cell = this.safeValue(row[h]);
-                            const displayValue = typeof row[h] === 'number' ? this.formatNumber(row[h]) : cell;
-                            table += `<td title="${cell}">${displayValue}</td>`;
-                        });
-                        table += '</tr>';
-                    });
-                    table += '</tbody></table>';
-                    content.innerHTML = table;
+                // If it's already formatted date, return as is
+                if (typeof value === 'string' && value.includes('/')) {
+                    return value;
                 }
-                this.modal.show();
+
+                // Parse Julian date (format: 1YYMMDD)
+                const dateObj = this.parseJulianDate(value);
+                if (dateObj) {
+                    return dateObj.toLocaleDateString('vi-VN');
+                }
+
+                return value;
             }
 
-            exportToExcel() {
-                if (this.currentData.length === 0) {
-                    return this.showToast('warning', 'Xuất Thất Bại', 'Không có dữ liệu để xuất.');
-                }
-                
+            parseJulianDate(julianStr) {
+                if (!julianStr || julianStr.length !== 7) return null;
+
                 try {
-                    const ws = XLSX.utils.json_to_sheet(this.currentData);
+                    const yearPart = julianStr.substring(1, 3);
+                    const month = julianStr.substring(3, 5);
+                    const day = julianStr.substring(5, 7);
+
+                    // Convert 2-digit year to 4-digit (assuming 20xx)
+                    const year = 2000 + parseInt(yearPart);
+
+                    return new Date(year, parseInt(month) - 1, parseInt(day));
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            exportModalData() {
+
+                if (!this.currentModalData) {
+                    this.showToast('Không có dữ liệu để xuất', 'warning');
+                    return;
+                }
+
+                let processedData = [];
+                let fileName = `Ashley_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                let sheetName = 'Data';
+
+                try {
+                    switch (this.currentModalType) {
+                        case 'shortage-pivot':
+                            processedData = this.exportShortagePivotData();
+                            fileName = `Ashley_Thieu_hang_${this.currentModalItem}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                            sheetName = 'Thieu_hang';
+                            break;
+
+                        case 'itcl-shortage-pivot':
+                            processedData = this.exportITCLShortagePivotData();
+                            fileName = `Ashley_ITCL_Thieu_hang_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                            sheetName = 'ITCL_Thieu_hang';
+                            break;
+
+                        case 'po':
+                        case 'po-detail':
+                            processedData = this.exportPOData();
+                            fileName = `Ashley_PO_${this.currentModalItem || 'All'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                            sheetName = 'Purchase_Orders';
+                            break;
+
+                        case 'demand':
+                            processedData = this.exportDemandData();
+                            fileName = `Ashley_Nhu_cau_${this.currentModalItem}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                            sheetName = 'Nhu_cau';
+                            break;
+
+                        default:
+                            // Fallback: export raw data
+                            if (Array.isArray(this.currentModalData)) {
+                                processedData = this.currentModalData;
+                            } else {
+                                this.showToast('Loại dữ liệu không được hỗ trợ xuất Excel', 'warning');
+                                return;
+                            }
+                    }
+
+                    if (!processedData || processedData.length === 0) {
+                        this.showToast('Không có dữ liệu để xuất', 'warning');
+                        return;
+                    }
+
+                    // Tạo và xuất file Excel
+                    const ws = XLSX.utils.json_to_sheet(processedData);
                     const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'DuLieuTonKho');
-                    const fileName = `DuLieuTonKho_${new Date().toISOString().slice(0,10)}_${Date.now()}.xlsx`;
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
                     XLSX.writeFile(wb, fileName);
-                    this.showToast('success', 'Xuất Thành Công', `File ${fileName} đã được tải xuống.`);
+
+                    this.showToast(`Đã xuất file: ${fileName}`, 'success');
+
                 } catch (error) {
-                    this.showToast('danger', 'Xuất Thất Bại', error.message);
+                    console.error('Export Error:', error);
+                    this.showToast('Lỗi xuất file Excel: ' + error.message, 'error');
                 }
             }
 
-            updateUIState() {
-                document.getElementById('connectBtn').disabled = this.isConnected;
-                document.getElementById('disconnectBtn').disabled = !this.isConnected;
-                ['username', 'password', 'host'].forEach(id => { 
-                    document.getElementById(id).disabled = this.isConnected; 
+            exportShortagePivotData() {
+                if (!this.currentModalData.rows || this.currentModalData.rows.length === 0) {
+                    return [];
+                }
+
+                const processedData = [];
+                const firstRow = this.currentModalData.rows[0];
+
+                // Thêm header info
+                processedData.push({
+                    'Loại': 'Thông tin chung',
+                    'Mã hàng': firstRow.CITEM,
+                    'ITCL': firstRow.ITCL,
+                    'Mô tả': firstRow.CDESC,
+                    'Tồn kho hiện tại': firstRow.currentInventory,
+                    'Tổng nhu cầu': this.currentModalData.totalDemand || 0,
+                    'Tổng thiếu': firstRow.grandTotal
                 });
-                document.getElementById('queryPanel').classList.toggle('d-none', !this.isConnected);
-                if (!this.isConnected) {
-                    document.getElementById('resultsPanel').classList.add('d-none');
+
+                // Thêm dòng trống
+                processedData.push({});
+
+                // Thêm data thiếu hàng theo ngày
+                if (this.currentModalData.allDates && this.currentModalData.allDates.length > 0) {
+                    processedData.push({
+                        'Loại': 'Chi tiết thiếu hàng theo ngày',
+                        ...Object.fromEntries(this.currentModalData.allDates.map(date => [date, '']))
+                    });
+
+                    this.currentModalData.rows.forEach(row => {
+                        const rowData = {
+                            'ITCL': row.ITCL,
+                            'Mã hàng': row.CITEM,
+                            'Mô tả': row.CDESC
+                        };
+
+                        this.currentModalData.allDates.forEach(date => {
+                            rowData[date] = row.dates[date] || 0;
+                        });
+
+                        rowData['Tổng thiếu'] = row.grandTotal;
+                        processedData.push(rowData);
+                    });
+                }
+
+                return processedData;
+            }
+
+            exportITCLShortagePivotData() {
+                if (!this.currentModalData.rows || this.currentModalData.rows.length === 0) {
+                    return [];
+                }
+
+                const processedData = [];
+
+                // Header info
+                processedData.push({
+                    'Loại': 'Thông tin ITCL',
+                    'ITCL': this.currentModalData.rows[0]?.ITCL || '',
+                    'Kho': this.currentModalHouse,
+                    'Tổng items': this.currentModalData.totalItems || 0,
+                    'Items thiếu hàng': this.currentModalData.rows.length
+                });
+
+                processedData.push({}); // Dòng trống
+
+                // Data thiếu hàng
+                this.currentModalData.rows.forEach(row => {
+                    const baseRow = {
+                        'ITCL': row.ITCL,
+                        'Mã hàng': row.CITEM,
+                        'Mô tả': row.CDESC,
+                    };
+
+                    this.currentModalData.allDates.forEach(date => {
+                        baseRow[date] = row.dates[date] || 0;
+                    });
+
+                    baseRow['Tổng thiếu'] = row.grandTotal;
+                    processedData.push(baseRow);
+                });
+
+                return processedData;
+            }
+
+            exportPOData() {
+                if (!Array.isArray(this.currentModalData) || this.currentModalData.length === 0) {
+                    return [];
+                }
+
+                return this.currentModalData.map(row => ({
+                    'Kho': this.safeValue(row.WH),
+                    'Mã hàng': this.safeValue(row.ITEM),
+                    'Mô tả': this.safeValue(row.DSC),
+                    'Số PO': this.safeValue(row.ORDNO),
+                    'SL Đặt': this.safeValue(row.ORDER_PO),
+                    'SL Nhận': this.safeValue(row.RIRP_IQC),
+                    'SL VR': this.safeValue(row.VR),
+                    'Chưa nhập': this.safeValue(row.BALANCE),
+                    'Nhà cung cấp': this.safeValue(row.VNAMA),
+                    'Ngày giao': this.formatDate(row.DUEDATE)
+                }));
+            }
+
+            exportDemandData() {
+                if (!Array.isArray(this.currentModalData) || this.currentModalData.length === 0) {
+                    return [];
+                }
+
+                return this.currentModalData.map(row => ({
+                    'Kho': this.safeValue(row.HOUSE),
+                    'Ngày': this.formatDate(row.ODUDT),
+                    'MO': this.safeValue(row.ORDNO),
+                    'SL Yêu cầu': this.safeValue(row.SUB_REQ),
+                    'Đã scan': this.safeValue(row.SCAN),
+                    'Chưa scan': this.safeValue(row.BALANCE),
+                    'FG': this.safeValue(row.FG_ITEM),
+                    'SL FG': this.safeValue(row.ORQTY),
+                    'JobNo': this.safeValue(row.JOBNO),
+                    'Line': this.safeValue(row.LINE),
+                    'ĐVT': this.safeValue(row.UNIT),
+                    'ITCL': this.safeValue(row.ITCL)
+                }));
+            }
+
+
+            async connect() {
+                const host = document.getElementById('host').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!host || !username || !password) {
+                    this.showToast('Vui lòng nhập đầy đủ thông tin kết nối', 'warning');
+                    return;
+                }
+
+                this.showLoading(true);
+
+                try {
+                    const testSql = "SELECT CURRENT USER FROM SYSIBM.SYSDUMMY1";
+                    await this.executeQuery(host, username, password, testSql);
+
+                    this.connected = true;
+                    this.connectionInfo = { host, username, password };
+                    this.updateUI();
+
+                    localStorage.setItem('ashleySettings', JSON.stringify({ host, username }));
+                    this.showToast('Kết nối thành công!', 'success');
+
+                    // Auto hide connection panel and show query
+                    setTimeout(() => {
+                        document.getElementById('connectionSection').classList.add('d-none');
+                        document.getElementById('connectionStatusCompact').classList.remove('d-none');
+                        document.getElementById('connectionDetails').textContent = `Đã kết nối với ${username}@${host}`;
+                        this.toggleQueryPanel(); // Auto show query panel
+                    }, 1000);
+
+                } catch (error) {
+                    this.showToast('Kết nối thất bại: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
                 }
             }
 
-            setLoading(isLoading, text) {
-                document.getElementById('loadingText').textContent = text;
-                document.getElementById('loadingOverlay').classList.toggle('d-none', !isLoading);
+            disconnect() {
+                this.connected = false;
+                this.connectionInfo = null;
+                this.currentData = [];
+                this.queryPanelVisible = false;
+                this.updateUI();
+
+                // Hide panels and show connection form
+                document.getElementById('resultsPanel').classList.add('d-none');
+                document.getElementById('queryPanel').classList.add('d-none');
+                document.getElementById('connectionStatusCompact').classList.add('d-none');
+                document.getElementById('connectionSection').classList.remove('d-none');
+
+                // Show connection body
+                const collapse = new bootstrap.Collapse(document.getElementById('connectionBody'), { toggle: false });
+                collapse.show();
+
+                this.showToast('Đã ngắt kết nối', 'info');
             }
 
-            showToast(type, title, message) {
-                const id = 'toast-' + Date.now();
-                const bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[type];
-                const html = `<div id="${id}" class="toast text-white ${bg}" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header text-white ${bg}">
-                        <strong class="me-auto">${title}</strong>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-                    </div>
-                    <div class="toast-body">${message}</div>
-                </div>`;
-                document.querySelector('.toast-container').insertAdjacentHTML('beforeend', html);
-                const toastEl = document.getElementById(id);
-                const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
-                toast.show();
-                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+            cleanData(data) {
+                // Kiểm tra data có phải array không
+                if (!Array.isArray(data)) {
+                    return [];
+                }
+
+                return data.map(row => {
+                    if (!row || typeof row !== 'object') {
+                        return {};
+                    }
+
+                    const cleanRow = {};
+                    Object.keys(row).forEach(key => {
+                        let value = row[key];
+
+                        if (typeof value === 'string') {
+                            value = value.replace(/[^\x20-\x7E\u00C0-\u017F]/g, '')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+
+                            if (/^[\d,\s]+$/.test(value) && value.includes(',')) {
+                                try {
+                                    const codes = value.split(',').map(c => parseInt(c.trim())).filter(c => c > 0 && c < 256);
+                                    if (codes.length > 1) {
+                                        const converted = String.fromCharCode(...codes).trim();
+                                        if (converted && converted.length > 0) {
+                                            value = converted;
+                                        }
+                                    }
+                                } catch (e) {
+                                    // Giữ nguyên value nếu không convert được
+                                }
+                            }
+                        }
+
+                        cleanRow[key] = value || '';
+                    });
+                    return cleanRow;
+                });
             }
 
-            formatInClause(input) {
-                if (!input) return '';
-                const items = input.split(',').map(i => i.trim()).filter(Boolean).map(i => `'${i.replace(/'/g, "''")}'`);
-                return items.length > 0 ? `(${items.join(',')})` : '';
+
+            async loadData() {
+                if (!this.connected) {
+                    this.showToast('Chưa kết nối', 'warning');
+                    return;
+                }
+
+                const houses = document.getElementById('houses').value.trim();
+                const items = document.getElementById('items').value.trim();
+
+                let sql = "SELECT CAST(SLQNTY.HOUSE AS CHAR(10)) AS HOUSE, CAST(SLQNTY.ITNBR AS CHAR(20)) AS ITNBR, CAST(TRIM(ITEMASA.ITDSC) AS CHAR(50)) AS ITDSC, CAST(SLQNTY.LLOCN AS CHAR(10)) AS LLOCN, CAST(ITEMASA.UNMSR AS CHAR(5)) AS UNMSR, SLQNTY.LQNTY, ITEMBL.MALQT AS DEMAN, CAST(ITEMASA.ITCLS AS CHAR(5)) AS ITCLS, CAST(SLQNTY.LBHNO AS CHAR(20)) AS LBHNO FROM AMFLIBW.ITEMASA ITEMASA, AMFLIBW.ITEMBL ITEMBL, AMFLIBW.SLQNTY SLQNTY WHERE ITEMASA.ITNBR = SLQNTY.ITNBR AND ITEMBL.HOUSE = SLQNTY.HOUSE AND ITEMBL.ITNBR = ITEMASA.ITNBR AND ITEMBL.ITNBR = SLQNTY.ITNBR";
+
+                if (houses) {
+                    const houseList = houses.split(',').map(h => h.trim()).join(',');
+                    sql += ` AND SLQNTY.HOUSE IN (${houseList})`;
+                }
+
+                if (items) {
+                    const itemList = items.split(',').map(i => `'${i.trim()}'`).join(',');
+                    sql += ` AND SLQNTY.ITNBR IN (${itemList})`;
+                }
+
+                sql += " ORDER BY SLQNTY.ITNBR ASC, SLQNTY.LLOCN DESC, SLQNTY.HOUSE ASC";
+
+                this.showLoading(true);
+
+                try {
+                    const data = await this.executeQuery(
+                        this.connectionInfo.host,
+                        this.connectionInfo.username,
+                        this.connectionInfo.password,
+                        sql
+                    );
+
+                    // Đảm bảo data là array trước khi xử lý
+                    if (!Array.isArray(data)) {
+                        throw new Error('Dữ liệu trả về không đúng định dạng');
+                    }
+
+                    this.currentData = data;
+                    this.displayData(data);
+                    this.showToast(`Đã tải ${data.length} bản ghi`, 'success');
+
+                } catch (error) {
+                    console.error('Load data error:', error);
+                    console.error('Error details:', {
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    this.showToast('Tải dữ liệu thất bại: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
             }
-            
-            formatJulianDate(date) {
+
+
+            formatJulianDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
                 const year = date.getFullYear().toString().slice(-2);
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
                 const day = date.getDate().toString().padStart(2, '0');
                 return `1${year}${month}${day}`;
             }
 
-            savePrefs() { 
-                localStorage.setItem('onhandPrefs', JSON.stringify({ 
-                    host: document.getElementById('host').value, 
-                    username: document.getElementById('username').value 
-                })); 
+            async executeQuery(host, username, password, sql) {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, username, password, sql })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+                // Đảm bảo luôn trả về array
+                const data = result.data || [];
+
+                // Nếu data không phải array, wrap nó trong array
+                if (!Array.isArray(data)) {
+                    return data ? [data] : [];
+                }
+
+                return data;
             }
-            
-            loadPrefs() {
-                const prefs = JSON.parse(localStorage.getItem('onhandPrefs') || '{}');
-                if (prefs.host) document.getElementById('host').value = prefs.host;
-                if (prefs.username) document.getElementById('username').value = prefs.username;
+
+            displayData(data) {
+                document.getElementById('resultsPanel').classList.remove('d-none');
+
+                // Kiểm tra data trước khi xử lý
+                if (!Array.isArray(data)) {
+                    document.getElementById('recordCount').textContent = '0';
+                    document.getElementById('tableBody').innerHTML = '<tr><td colspan="10" class="text-center p-4 text-danger">Lỗi: Dữ liệu không đúng định dạng</td></tr>';
+                    return;
+                }
+
+                document.getElementById('recordCount').textContent = data.length;
+
+                const header = document.getElementById('tableHeader');
+                const body = document.getElementById('tableBody');
+
+                header.innerHTML = '';
+                body.innerHTML = '';
+
+                if (data.length === 0) {
+                    body.innerHTML = '<tr><td colspan="10" class="text-center p-4">Không có dữ liệu</td></tr>';
+                    return;
+                }
+
+                const cleanedData = this.cleanData(data);
+
+                const headers = ['Kho', 'Mã hàng', 'Mô tả', 'Vị trí', 'ĐVT', 'SL tồn', 'Nhu cầu', 'ITCLs', 'BatchLot', 'Thao tác'];
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    header.appendChild(th);
+                });
+
+                cleanedData.forEach(row => {
+                    const tr = document.createElement('tr');
+
+                    const house = this.safeValue(row.HOUSE);
+                    const item = this.safeValue(row.ITNBR);
+                    const desc = this.safeValue(row.ITDSC);
+                    const location = this.safeValue(row.LLOCN);
+                    const unit = this.safeValue(row.UNMSR);
+                    const qty = this.formatNumber(row.LQNTY);
+                    const demand = this.formatNumber(row.DEMAN);
+                    const itemClass = this.safeValue(row.ITCLS);
+                    const batch = this.safeValue(row.LBHNO);
+
+                    // Kiểm tra vị trí để áp dụng class CSS
+                    const isSpecialLocation = location.toUpperCase() !== 'S01ST1';
+                    const locationClass = isSpecialLocation ? 'location-other' : 'location-s01st1';
+
+                    // Thêm class cho row nếu có vị trí đặc biệt
+                    if (isSpecialLocation) {
+                        tr.classList.add('has-special-location');
+                    }
+
+                    tr.innerHTML = `
+            <td class="truncate">${house}</td>
+            <td><span class="item-code">${item}</span></td>
+            <td class="truncate" title="${desc}">${desc}</td>
+            <td><span class="location-badge ${locationClass}" title="Vị trí: ${location}">${location}</span></td>
+            <td class="text-center">${unit}</td>
+            <td class="quantity text-success">${qty}</td>
+            <td class="quantity text-info">${demand}</td>
+            <td><span class="badge bg-secondary">${itemClass}</span></td>
+            <td class="text-muted">${batch}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-primary action-btn check-po-btn me-1" 
+                        data-item="${item}" data-house="${house}" 
+                        title="Kiểm tra PO">
+                    <i class="fas fa-file-invoice"></i> Đặt hàng
+                </button>
+                <button class="btn btn-sm btn-info action-btn check-demand-btn" 
+                        data-item="${item}" data-house="${house}" 
+                        title="Kiểm tra Nhu cầu">
+                    <i class="fas fa-chart-line"></i> Nhu cầu
+                </button>
+                <button class="btn btn-sm btn-danger action-btn check-shortage-btn" 
+                    data-item="${item}" data-house="${house}" 
+                    title="Kiểm tra thiếu hàng">
+                <i class="fas fa-exclamation-triangle"></i> Thiếu hàng
+            </button>
+            </td>
+        `;
+                    body.appendChild(tr);
+                });
+            }
+
+
+            safeValue(value) {
+                if (value === null || value === undefined) return '';
+
+                if (typeof value === 'number') {
+                    return value.toString().trim();
+                }
+
+                if (typeof value === 'string') {
+                    return value.trim();
+                }
+
+                return String(value).trim();
+            }
+
+            formatNumber(value) {
+                if (value === null || value === undefined || value === '') return '0';
+                const num = parseFloat(value);
+                return isNaN(num) ? '0' : num.toLocaleString('vi-VN');
+            }
+
+            exportExcel() {
+                if (this.currentData.length === 0) {
+                    this.showToast('Không có dữ liệu để xuất', 'warning');
+                    return;
+                }
+
+                // Sắp xếp dữ liệu theo cấu trúc hiển thị trên web
+                const processedData = this.currentData.map(row => ({
+                    'Kho': this.safeValue(row.HOUSE),
+                    'Sản phẩm': this.safeValue(row.ITNBR),
+                    'Mô tả': this.safeValue(row.ITDSC),
+                    'Vị trí': this.safeValue(row.LLOCN),
+                    'ĐVT': this.safeValue(row.UNMSR),
+                    'SL tồn': this.safeValue(row.LQNTY),
+                    'Nhu cầu': this.safeValue(row.DEMAN),
+                    'Loại': this.safeValue(row.ITCLS),
+                    'Lô': this.safeValue(row.LBHNO)
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(processedData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Ton_kho');
+
+                const fileName = `Ashley_Ton_kho_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+                this.showToast('Đã xuất file: ' + fileName, 'success');
+            }
+
+            updateUI() {
+                // Không cần update UI phức tạp nữa vì đã có connection status compact
+            }
+
+            showLoading(show) {
+                document.getElementById('loading').classList.toggle('d-none', !show);
             }
         }
-        
-        document.addEventListener('DOMContentLoaded', () => { new MainApp(); });
+
+        // Initialize app
+        // Shift + Alt + F (Windows/Linux) - Format toàn bộ file
+        const app = new InventoryApp();
+        window.app = app;
     </script>
 </body>
+
 </html>
