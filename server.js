@@ -2,8 +2,27 @@ const http = require('http');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const PORT = 3001;
+const AUTO_OPEN_BROWSER = true; // Tự động mở browser
+
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+
+function openBrowser(url) {
+    const start = (process.platform == 'darwin'? 'open': process.platform == 'win32'? 'start': 'xdg-open');
+    exec(`${start} ${url}`);
+}
 
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -56,11 +75,9 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // Tạo temp file với parameters
-                const tempDir = require('os').tmpdir();
+                const tempDir = os.tmpdir();
                 const tempFile = path.join(tempDir, `ashley_query_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.json`);
                 
-                // Clean SQL - loại bỏ xuống dòng và space thừa
                 const cleanSql = sql.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
                 
                 const params = {
@@ -72,7 +89,6 @@ const server = http.createServer((req, res) => {
                 
                 fs.writeFileSync(tempFile, JSON.stringify(params, null, 2), 'utf8');
 
-                // Command đơn giản với temp file
                 const cmd = `powershell.exe -ExecutionPolicy Bypass -NoProfile -File "${scriptPath}" -ParamFile "${tempFile}"`;
 
                 console.log('Executing PowerShell with temp file:', tempFile);
@@ -83,7 +99,6 @@ const server = http.createServer((req, res) => {
                     encoding: 'utf8'
                 }, (error, stdout, stderr) => {
                     
-                    // Cleanup temp file
                     try { 
                         if (fs.existsSync(tempFile)) {
                             fs.unlinkSync(tempFile); 
@@ -122,10 +137,8 @@ const server = http.createServer((req, res) => {
                     }
 
                     try {
-                        // Clean output - chỉ lấy JSON
                         let cleanOutput = stdout.trim();
                         
-                        // Tìm JSON boundaries
                         const jsonStart = cleanOutput.indexOf('[') !== -1 ? cleanOutput.indexOf('[') : cleanOutput.indexOf('{');
                         const jsonEnd = cleanOutput.lastIndexOf(']') !== -1 ? cleanOutput.lastIndexOf(']') : cleanOutput.lastIndexOf('}');
                         
@@ -163,14 +176,46 @@ const server = http.createServer((req, res) => {
     res.end('Not Found');
 });
 
-server.listen(PORT, () => {
-    console.log(`🚀 Ashley Inventory System running on http://localhost:${PORT}`);
-    console.log(`📁 Working directory: ${__dirname}`);
+server.listen(PORT, '0.0.0.0', () => {
+    const localIP = getLocalIP();
+    
+    console.log('=========================================');
+    console.log('   ASHLEY INVENTORY SYSTEM STARTED');
+    console.log('=========================================');
+    console.log('');
+    console.log('🚀 Server running on:');
+    console.log(`   📍 Local:   http://localhost:${PORT}`);
+    console.log(`   🌐 Network: http://${localIP}:${PORT}`);
+    console.log('');
+    console.log('📁 Working directory:', __dirname);
+    console.log('');
     
     const requiredFiles = ['index.html', 'get-data.ps1'];
     requiredFiles.forEach(file => {
         const fullPath = path.join(__dirname, file);
         const exists = fs.existsSync(fullPath);
-        console.log(`${exists ? '✅' : '❌'} ${file} - ${fullPath}`);
+        console.log(`${exists ? '✅' : '❌'} ${file}`);
+    });
+    
+    console.log('');
+    console.log('ℹ️  To stop server: Press Ctrl+C');
+    console.log('ℹ️  Share this URL with others: http://' + localIP + ':' + PORT);
+    console.log('');
+    
+    // Tự động mở browser sau 2 giây
+    if (AUTO_OPEN_BROWSER) {
+        setTimeout(() => {
+            console.log('🌐 Opening browser...');
+            openBrowser(`http://localhost:${PORT}`);
+        }, 2000);
+    }
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n\n🛑 Server stopping...');
+    server.close(() => {
+        console.log('✅ Server stopped successfully');
+        process.exit(0);
     });
 });

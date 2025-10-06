@@ -4,6 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ashley Inventory">
+<meta name="theme-color" content="#1e3a8a">
+<meta name="format-detection" content="telephone=no">
     <title>Ashley Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -599,6 +605,249 @@
                 min-width: 1200px;
             }
         }
+
+        /* ===== MOBILE RESPONSIVE IMPROVEMENTS ===== */
+@media (max-width: 768px) {
+    body {
+        font-size: 0.6rem;
+    }
+    
+    .container-fluid {
+        padding: 0.5rem;
+    }
+    
+    .card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    .table {
+        font-size: 0.6rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.1rem 0.15rem;
+        font-size: 0.6rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .action-btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.2rem;
+        font-size: 0.6rem;
+        padding: 0.3rem 0.5rem;
+        min-height: 36px;
+    }
+    
+    .modal-xl-custom {
+        max-width: 98%;
+        margin: 1% auto;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: none;
+        width: calc(100vw - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+    
+    .modal-body {
+        padding: 0.5rem;
+    }
+    
+    .modal-table-container {
+        max-height: 60vh;
+        overflow: auto;
+    }
+    
+    .table-container {
+        max-height: 50vh;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+    
+    .table-container table {
+        min-width: 800px;
+    }
+    
+    .form-control {
+        font-size: 16px; /* Ngăn zoom trên iOS */
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .form-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .row .col-md-3,
+    .row .col-md-4,
+    .row .col-md-6 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .connection-status-compact {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .connection-status-compact .connection-actions {
+        justify-content: center;
+    }
+    
+    .toast-container {
+        left: 0.5rem;
+        right: 0.5rem;
+        top: 0.5rem;
+    }
+    
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .badge {
+        font-size: 0.6rem;
+        padding: 0.2em 0.4em;
+    }
+    
+    .truncate {
+        max-width: 80px;
+    }
+    
+    .text-truncate-custom {
+        max-width: 120px;
+    }
+    
+    /* Mobile table columns */
+    .col-house { width: 40px; }
+    .col-item { width: 80px; }
+    .col-desc { width: 120px; }
+    .col-qty { width: 60px; }
+    .col-date { width: 80px; }
+    .col-vendor { width: 100px; }
+    .col-order { width: 80px; }
+    .col-balance { width: 60px; }
+    .col-jobno { width: 80px; }
+    .col-line { width: 40px; }
+    .col-unit { width: 40px; }
+    .col-type { width: 50px; }
+}
+
+@media (max-width: 576px) {
+    body {
+        font-size: 0.55rem;
+    }
+    
+    .action-btn {
+        font-size: 0.55rem;
+        padding: 0.25rem 0.4rem;
+        margin-bottom: 0.15rem;
+    }
+    
+    .table {
+        font-size: 0.55rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.1rem;
+        font-size: 0.55rem;
+    }
+    
+    .modal-table-container {
+        max-height: 50vh;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    .connection-actions .btn {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (pointer: coarse) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .action-btn {
+        min-height: 40px;
+        padding: 0.5rem;
+    }
+    
+    .table th,
+    .table td {
+        min-height: 32px;
+    }
+}
+
+/* Mobile modal improvements */
+.mobile-modal .modal-dialog {
+    height: 100vh;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+}
+
+.mobile-modal .modal-content {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+}
+
+.mobile-modal .modal-body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.mobile-device .table-container {
+    font-size: 0.6rem;
+}
+
+.mobile-device .action-btn i {
+    margin-right: 0.2rem;
+}
+
+/* Horizontal scroll indicator */
+.table-responsive::after {
+    content: "← Vuốt để xem thêm →";
+    position: sticky;
+    left: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.1);
+    text-align: center;
+    padding: 0.25rem;
+    font-size: 0.6rem;
+    color: #666;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .table-responsive::after {
+        display: block;
+    }
+}
+
     </style>
 </head>
 
@@ -789,7 +1038,9 @@
                 this.currentModalHouse = null;
                 this.queryPanelVisible = false;
                 this.modalStack = [];
+                 this.isMobile = this.detectMobile();
                 this.init();
+                this.optimizeForMobile();
             }
 
             init() {
@@ -1499,6 +1750,203 @@
                     this.showLoading(false);
                 }
             }
+
+            detectMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           window.innerWidth < 768;
+}
+
+optimizeForMobile() {
+    if (this.isMobile) {
+        document.body.classList.add('mobile-device');
+        
+        // Optimize modal for mobile
+        const modal = document.getElementById('detailModal');
+        modal.classList.add('mobile-modal');
+        
+        // Add mobile-specific event listeners
+        this.addMobileEventListeners();
+        
+        // Reduce animation duration on mobile
+        document.documentElement.style.setProperty('--bs-modal-transition', '0.15s');
+    }
+}
+
+addMobileEventListeners() {
+    // Touch scroll optimization
+    let isScrolling = false;
+    
+    document.addEventListener('touchstart', () => {
+        isScrolling = true;
+    });
+    
+    document.addEventListener('touchend', () => {
+        setTimeout(() => {
+            isScrolling = false;
+        }, 100);
+    });
+    
+    // Prevent zoom on double tap for buttons
+    document.addEventListener('touchend', (e) => {
+        if (e.target.closest('.btn') && !isScrolling) {
+            e.preventDefault();
+        }
+    });
+    
+    // Mobile-specific loading improvements
+    window.addEventListener('resize', () => {
+        if (this.detectMobile() !== this.isMobile) {
+            this.isMobile = this.detectMobile();
+            this.optimizeForMobile();
+        }
+    });
+}
+
+// Sửa displayData method để tối ưu mobile
+displayData(data) {
+    document.getElementById('resultsPanel').classList.remove('d-none');
+
+    if (!Array.isArray(data)) {
+        document.getElementById('recordCount').textContent = '0';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="10" class="text-center p-4 text-danger">Lỗi: Dữ liệu không đúng định dạng</td></tr>';
+        return;
+    }
+
+    document.getElementById('recordCount').textContent = data.length;
+
+    const header = document.getElementById('tableHeader');
+    const body = document.getElementById('tableBody');
+
+    header.innerHTML = '';
+    body.innerHTML = '';
+
+    if (data.length === 0) {
+        body.innerHTML = '<tr><td colspan="10" class="text-center p-4">Không có dữ liệu</td></tr>';
+        return;
+    }
+
+    const cleanedData = this.cleanData(data);
+
+    // Mobile-optimized headers
+    const headers = this.isMobile ? 
+        ['Kho', 'Mã hàng', 'SL tồn', 'Thao tác'] : 
+        ['Kho', 'Mã hàng', 'Mô tả', 'Vị trí', 'ĐVT', 'SL tồn', 'Nhu cầu', 'ITCLs', 'BatchLot', 'Thao tác'];
+    
+    headers.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        header.appendChild(th);
+    });
+
+    cleanedData.forEach(row => {
+        const tr = document.createElement('tr');
+
+        const house = this.safeValue(row.HOUSE);
+        const item = this.safeValue(row.ITNBR);
+        const desc = this.safeValue(row.ITDSC);
+        const location = this.safeValue(row.LLOCN);
+        const unit = this.safeValue(row.UNMSR);
+        const qty = this.formatNumber(row.LQNTY);
+        const demand = this.formatNumber(row.DEMAN);
+        const itemClass = this.safeValue(row.ITCLS);
+        const batch = this.safeValue(row.LBHNO);
+
+        const isSpecialLocation = location.toUpperCase() !== 'S01ST1';
+        const locationClass = isSpecialLocation ? 'location-other' : 'location-s01st1';
+
+        if (isSpecialLocation) {
+            tr.classList.add('has-special-location');
+        }
+
+        // Mobile-optimized row content
+        if (this.isMobile) {
+            tr.innerHTML = `
+                <td class="truncate">${house}</td>
+                <td><span class="item-code">${item}</span><br><small class="text-muted">${desc.substring(0, 20)}...</small></td>
+                <td class="quantity text-success">${qty}<br><small class="text-info">${demand}</small></td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-primary action-btn check-po-btn" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Đặt hàng">
+                        <i class="fas fa-file-invoice"></i> PO
+                    </button>
+                    <button class="btn btn-sm btn-info action-btn check-demand-btn" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Nhu cầu">
+                        <i class="fas fa-chart-line"></i> Nhu cầu
+                    </button>
+                    <button class="btn btn-sm btn-danger action-btn check-shortage-btn" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Thiếu hàng">
+                        <i class="fas fa-exclamation-triangle"></i> Thiếu
+                    </button>
+                </td>
+            `;
+        } else {
+            // Desktop version (original code)
+            tr.innerHTML = `
+                <td class="truncate">${house}</td>
+                <td><span class="item-code">${item}</span></td>
+                <td class="truncate" title="${desc}">${desc}</td>
+                <td><span class="location-badge ${locationClass}" title="Vị trí: ${location}">${location}</span></td>
+                <td class="text-center">${unit}</td>
+                <td class="quantity text-success">${qty}</td>
+                <td class="quantity text-info">${demand}</td>
+                <td><span class="badge bg-secondary">${itemClass}</span></td>
+                <td class="text-muted">${batch}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-primary action-btn check-po-btn me-1" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Kiểm tra PO">
+                        <i class="fas fa-file-invoice"></i> Đặt hàng
+                    </button>
+                    <button class="btn btn-sm btn-info action-btn check-demand-btn" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Kiểm tra Nhu cầu">
+                        <i class="fas fa-chart-line"></i> Nhu cầu
+                    </button>
+                    <button class="btn btn-sm btn-danger action-btn check-shortage-btn" 
+                            data-item="${item}" data-house="${house}" 
+                            title="Kiểm tra thiếu hàng">
+                        <i class="fas fa-exclamation-triangle"></i> Thiếu hàng
+                    </button>
+                </td>
+            `;
+        }
+        body.appendChild(tr);
+    });
+
+    // Add horizontal scroll hint for mobile
+    if (this.isMobile) {
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer && !tableContainer.querySelector('.mobile-scroll-hint')) {
+            const hint = document.createElement('div');
+            hint.className = 'mobile-scroll-hint text-center text-muted p-2';
+            hint.innerHTML = '<small><i class="fas fa-arrows-alt-h"></i> Vuốt để xem thêm</small>';
+            tableContainer.appendChild(hint);
+        }
+    }
+}
+
+// Thêm method loading tối ưu cho mobile
+showLoading(show) {
+    const loading = document.getElementById('loading');
+    
+    if (show) {
+        loading.classList.remove('d-none');
+        if (this.isMobile) {
+            // Lighter loading animation for mobile
+            loading.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" style="width: 2rem; height: 2rem;"></div>
+                    <p class="mt-2" style="font-size: 0.8rem;">Đang tải...</p>
+                </div>
+            `;
+        }
+    } else {
+        loading.classList.add('d-none');
+    }
+}
 
             // Thay thế hàm createSingleItemPivot
             createSingleItemPivot(demandData, currentInventory, itemInfo) {
